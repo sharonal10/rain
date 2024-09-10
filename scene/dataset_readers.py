@@ -132,7 +132,7 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
     llffhold = len(cam_infos)/args_dict['num_cams']
     print('args.eval', args_dict['eval'])
-    if eval:
+    if eval and not args_dict['render_only']:
         train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 0]
         test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 0]
     else:
