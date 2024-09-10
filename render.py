@@ -36,17 +36,17 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         
         inferno_mapper = cm.ScalarMappable(norm=normalizer,cmap="inferno")
         colormap_inferno = (inferno_mapper.to_rgba(render_depth.cpu().numpy())*255).astype('uint8') 
-        imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + "_depth_inferno.png"), colormap_inferno)
+        #imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + "_depth_inferno.png"), colormap_inferno)
         
         torchvision.utils.save_image(rendered_image, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
-        torchvision.utils.save_image(rendered_depth, os.path.join(render_path, '{0:05d}'.format(idx) + "_depth.png"))
-        torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+        #torchvision.utils.save_image(rendered_depth, os.path.join(render_path, '{0:05d}'.format(idx) + "_depth.png"))
+        #torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
 
-def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool):
+def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool, num_cams):
     with torch.no_grad():
         divide_ratio = 0.8
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio)
-        scene = Scene(dataset, gaussians, load_iteration=iteration, shuffle=False)
+        scene = Scene(dataset, gaussians, load_iteration=iteration, shuffle=False, num_cams=num_cams)
 
         bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
@@ -65,9 +65,10 @@ if __name__ == "__main__":
     parser.add_argument("--skip_train", action="store_true")
     parser.add_argument("--skip_test", action="store_true")
     parser.add_argument("--quiet", action="store_true")
+    parser.add_argument("--num_cams", default=10, type=int)
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
     
     safe_state(args.quiet)
 
-    render_sets(model.extract(args), args.iteration, pipeline.extract(args), args.skip_train, args.skip_test)
+    render_sets(model.extract(args), args.iteration, pipeline.extract(args), args.skip_train, args.skip_test, args.num_cams)

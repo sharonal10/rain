@@ -250,6 +250,7 @@ if __name__ == "__main__":
     parser.add_argument("--ours_new", action="store_true", help="Use our initialisation version 2")
     parser.add_argument("--warmup_iter", type=int, default=0)
     parser.add_argument("--train_from", type=str, default="random", choices=["random", "reprojection", "cluster", "noisy_sfm"])
+    parser.add_argument('--num_cams', type=int, default=10)
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
     args.white_background = args.white_bg
