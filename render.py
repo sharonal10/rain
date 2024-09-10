@@ -71,6 +71,7 @@ if __name__ == "__main__":
     parser.add_argument("--quiet", action="store_true")
     parser.add_argument("--num_cams", default=10, type=int)
     parser.add_argument("--ours_new", action="store_true", help="Use our initialisation version 2")
+    parser.add_argument("--ours", action="store_true", help="Use our initialisation version 2")
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
 
