@@ -69,7 +69,6 @@ if __name__ == "__main__":
     parser.add_argument("--skip_train", action="store_true")
     parser.add_argument("--skip_test", action="store_true")
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("--eval", action="store_true")
     parser.add_argument("--num_cams", default=10, type=int)
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
