@@ -144,6 +144,12 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         # Save the image
         pil_image_from_tensor.save('masked_gt_image.png')
 
+        
+        pil_image_from_tensor = TorchToPIL(image)
+
+        # Save the image
+        pil_image_from_tensor.save('image.png')
+
         assert False
         Ll1 = l1_loss(masked_image, masked_gt_image)
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
