@@ -260,6 +260,7 @@ if __name__ == "__main__":
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
     args.white_background = args.white_bg
+    args.render_only = False
     print("Optimizing " + args.model_path)
 
     safe_state(args.quiet)
