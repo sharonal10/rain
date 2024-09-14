@@ -132,6 +132,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         # Example usage:
         # pil_image is your original PIL image.
         # tensor_image is the output of the PILtoTorch function.
+        print(f"--------------Name: {viewpoint_cam.image_name}")
 
         # Convert the tensor back to a PIL image
         pil_image_from_tensor = TorchToPIL(masked_image)
