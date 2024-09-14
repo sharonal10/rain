@@ -113,6 +113,37 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         mask = viewpoint_cam.mask.cuda()
         masked_image = image*mask
         masked_gt_image = gt_image*mask
+
+        from PIL import Image
+        def TorchToPIL(tensor_image):
+            # Ensure the tensor is in the correct shape (C, H, W)
+            if tensor_image.shape[0] == 1:  # Grayscale image
+                tensor_image = tensor_image.squeeze(0)  # Remove the channel dimension
+                numpy_image = tensor_image.numpy() * 255.0
+                numpy_image = numpy_image.astype(np.uint8)
+                return Image.fromarray(numpy_image, mode='L')
+            
+            # For RGB images (C, H, W) -> (H, W, C)
+            numpy_image = tensor_image.permute(1, 2, 0).numpy() * 255.0
+            numpy_image = numpy_image.astype(np.uint8)
+            return Image.fromarray(numpy_image)
+
+        # Example usage:
+        # pil_image is your original PIL image.
+        # tensor_image is the output of the PILtoTorch function.
+
+        # Convert the tensor back to a PIL image
+        pil_image_from_tensor = TorchToPIL(masked_image)
+
+        # Save the image
+        pil_image_from_tensor.save('masked_image.png')
+
+        pil_image_from_tensor = TorchToPIL(masked_gt_image)
+
+        # Save the image
+        pil_image_from_tensor.save('masked_gt_image.png')
+
+        assert False
         Ll1 = l1_loss(masked_image, masked_gt_image)
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
         loss.backward()
