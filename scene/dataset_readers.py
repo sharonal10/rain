@@ -23,6 +23,10 @@ class CameraInfo(NamedTuple):
     image_name: str
     width: int
     height: int
+    mask: np.array
+    mask_path: str
+    mask_name: str
+
 
 class SceneInfo(NamedTuple):
     point_cloud: BasicPointCloud
@@ -54,7 +58,7 @@ def getNerfppNorm(cam_info):
 
     return {"translate": translate, "radius": radius}
 
-def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
+def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, masks_folder):
     cam_infos = []
     for idx, key in enumerate(cam_extrinsics):
         sys.stdout.write('\r')
@@ -86,8 +90,13 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
         image_name = os.path.basename(image_path).split(".")[0]
         image = Image.open(image_path)
 
+        mask_path = os.path.join(masks_folder, os.path.basename(extr.name))
+        mask_name = os.path.basename(mask_path).split(".")[0]
+        mask = Image.open(mask_path)
+
         cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
-                              image_path=image_path, image_name=image_name, width=width, height=height)
+                              image_path=image_path, image_name=image_name, width=width, height=height,
+                              mask=mask, mask_path=mask_path, mask_name=mask_name)
         cam_infos.append(cam_info)
     sys.stdout.write('\n')
     return cam_infos
@@ -115,6 +124,45 @@ def storePly(path, xyz, rgb):
     ply_data = PlyData([vertex_element])
     ply_data.write(path)
 
+
+# Rotation matrix for a single axis (Rx, Ry, Rz)
+def rotation_matrix(angles):
+    theta_x, theta_y, theta_z = angles
+    Rx = np.array([[1, 0, 0],
+                   [0, np.cos(theta_x), -np.sin(theta_x)],
+                   [0, np.sin(theta_x), np.cos(theta_x)]])
+    
+    Ry = np.array([[np.cos(theta_y), 0, np.sin(theta_y)],
+                   [0, 1, 0],
+                   [-np.sin(theta_y), 0, np.cos(theta_y)]])
+    
+    Rz = np.array([[np.cos(theta_z), -np.sin(theta_z), 0],
+                   [np.sin(theta_z), np.cos(theta_z), 0],
+                   [0, 0, 1]])
+    
+    return Rz @ Ry @ Rx
+
+
+# Transform points to the global frame
+def transform_points_local_to_global(points, box_center, box_rotation):
+    # Rotate points using rotation matrix
+    R = rotation_matrix(box_rotation)
+    rotated_points = np.dot(points, R.T)
+    
+    # Translate points relative to box center
+    transformed_points = rotated_points + box_center
+    
+    return transformed_points
+
+# Generate points inside the box in its local coordinate system
+def generate_points_in_box(box_size, num_points):
+    # half_size = box_size / 2
+    
+    # Generate random points inside a box from [-half_size, +half_size]
+    points_local = np.random.uniform(-box_size, box_size, (num_points, 3))
+    
+    return points_local
+
 def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
@@ -128,7 +176,8 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
 
     reading_dir = "images" if images == None else images
-    cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics, images_folder=os.path.join(path, reading_dir))
+    cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics,
+                                           images_folder=os.path.join(path, reading_dir), masks_folder=os.path.join(path, 'masks'))
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
     llffhold = len(cam_infos)/args_dict['num_cams']
     print('args.eval', args_dict['eval'])
@@ -141,9 +190,7 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
     print(f"number of cameras: {len(train_cam_infos)}")
     nerf_normalization = getNerfppNorm(train_cam_infos)
 
-
-    assert args_dict['render_only']
-    if not args_dict['render_only']:
+    if not args_dict['render_only'] and not args_dict['box_gen']:
         ply_path = os.path.join(path, "sparse/0/points3D.ply")
         bin_path = os.path.join(path, "sparse/0/points3D.bin")
         txt_path = os.path.join(path, "sparse/0/points3D.txt")
@@ -212,6 +259,18 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
                 shs = np.random.random((num_pts, 3))
                 pcd = BasicPointCloud(points=xyz, colors=shs, normals=np.zeros((num_pts, 3)))
                 storePly(ply_path, xyz, SH2RGB(shs) * 255)
+    elif not args_dict['render_only'] and args_dict['box_gen']:
+        print('generating point cloud in a box')
+        box_center = np.array([-0.632, 0.592, 2.72])
+        box_size = np.array([0.318, 0.478, 0.738])
+        box_rotation = np.radians([-41.176, -48.239, -37.687])
+        num_points = 6000
+
+        points_local = generate_points_in_box(box_size, num_points)
+        xyz = transform_points_local_to_global(points_local, box_center, box_rotation)
+        shs = np.random.random((num_points, 3))
+        print(f'storing in {ply_path}')
+        storePly(ply_path, xyz, SH2RGB(shs) * 255)
     else:
         ply_path = os.path.join(path, "result.ply")
     try:

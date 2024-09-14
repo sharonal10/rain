@@ -110,6 +110,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
 
         gt_image = viewpoint_cam.original_image.cuda()
+        mask = viewpoint_cam.mask.cuda()
+        import pdb; pdb.set_trace()
         Ll1 = l1_loss(image, gt_image)
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
         loss.backward()
@@ -251,6 +253,9 @@ if __name__ == "__main__":
     parser.add_argument("--warmup_iter", type=int, default=0)
     parser.add_argument("--train_from", type=str, default="random", choices=["random", "reprojection", "cluster", "noisy_sfm"])
     parser.add_argument('--num_cams', type=int, default=10)
+    
+    parser.add_argument("--box_gen", action="store_true", help="Use box_gen initialisation")
+    
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
     args.white_background = args.white_bg
