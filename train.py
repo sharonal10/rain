@@ -115,9 +115,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         masked_gt_image = gt_image*mask
 
         from PIL import Image
-        def TorchToPIL(tensor_image):
+        def TorchToPIL(ti):
             # Ensure the tensor is in the correct shape (C, H, W)
-            tensor_image = tensor_image.cpu()
+            tensor_image = ti.cpu().detach()
             if tensor_image.shape[0] == 1:  # Grayscale image
                 tensor_image = tensor_image.squeeze(0)  # Remove the channel dimension
                 numpy_image = tensor_image.numpy() * 255.0
