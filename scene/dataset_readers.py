@@ -261,9 +261,12 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
                 storePly(ply_path, xyz, SH2RGB(shs) * 255)
     elif not args_dict['render_only'] and args_dict['box_gen']:
         print('generating point cloud in a box')
-        box_center = np.array([-0.632, 0.592, 2.72])
-        box_size = np.array([0.318, 0.478, 0.738])
-        box_rotation = np.radians([-41.176, -48.239, -37.687])
+        # box_center = np.array([-0.632, 0.592, 2.72])
+        # box_size = np.array([0.318, 0.478, 0.738])
+        # box_rotation = np.radians([-41.176, -48.239, -37.687])
+        box_center = np.array([0, 0, 0])
+        box_size = np.array([1, 1, 1])
+        box_rotation = np.radians([0, 0, 0])
         num_points = 6000
 
         points_local = generate_points_in_box(box_size, num_points)
