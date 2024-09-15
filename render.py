@@ -43,7 +43,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         
         inferno_mapper = cm.ScalarMappable(norm=normalizer,cmap="inferno")
         colormap_inferno = (inferno_mapper.to_rgba(render_depth.cpu().numpy())*255).astype('uint8') 
-        rgb = (rendered_image.to_rgba(render_depth.cpu().numpy())*255).astype('uint8') 
+        rgb = ((rendered_image.cpu().numpy())*255).astype('uint8')
         depth_video.write(colormap_inferno)
         rgb_video.write(rgb)
     cv2.destroyAllWindows()
