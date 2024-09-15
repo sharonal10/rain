@@ -26,9 +26,9 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     sample = render(views[0], gaussians, pipeline, background)
     fps = 10
     height, width, _ = sample["depth"].shape
-    depth_video = cv2.VideoWriter(os.path.join("videos", f"{os.path.basename(render_path)}_depth.mp4"), cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
+    depth_video = cv2.VideoWriter(os.path.join("videos", f"{os.path.basename(model_path)}_depth.mp4"), cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
     height, width, _ = sample["render"].shape
-    rgb_video = cv2.VideoWriter(os.path.join("videos", f"{os.path.basename(render_path)}_rgb.mp4"), cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
+    rgb_video = cv2.VideoWriter(os.path.join("videos", f"{os.path.basename(model_path)}_rgb.mp4"), cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
 
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
         rendering = render(view, gaussians, pipeline, background)
