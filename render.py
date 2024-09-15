@@ -15,19 +15,42 @@ import matplotlib.cm as cm
 import imageio
 import numpy as np
 import cv2
+import re
+import shutil
+
+def get_image_files(directory, postfix=""):
+    # Regex to match filenames like 'table_0', 'table_10', etc.
+    pattern = re.compile(rf'(\d+){postfix}\.png')
+    files = []
+    for filename in os.listdir(directory):
+        match = pattern.match(filename)
+        if match:
+            number = int(match.group(1))
+            files.append((number, os.path.join(directory, filename)))
+    # Sort by the extracted number in descending order
+    files.sort(key=lambda x: x[0], reverse=False)
+    return [file[1] for file in files]
+
+def create_video(image_files, output_video, fps=10):
+    # Read the first image to get the dimensions
+    frame = cv2.imread(image_files[0])
+    height, width, layers = frame.shape
+    video = cv2.VideoWriter(output_video, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
+    
+    for image_file in image_files:
+        video.write(cv2.imread(image_file))
+    
+    cv2.destroyAllWindows()
+    video.release()
+
 
 def render_set(model_path, name, iteration, views, gaussians, pipeline, background):
-    render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
-    gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
+    # render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
+    render_path = os.path.join(model_path, "to_delete")
+    # gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
 
     makedirs(render_path, exist_ok=True)
-    makedirs(gts_path, exist_ok=True)
-
-    sample = render(views[0], gaussians, pipeline, background)
-    fps = 10
-    height, width, _ = sample["render"].shape
-    depth_video = cv2.VideoWriter(os.path.join("videos", f"{os.path.basename(model_path)}_depth.mp4"), cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
-    rgb_video = cv2.VideoWriter(os.path.join("videos", f"{os.path.basename(model_path)}_rgb.mp4"), cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
+    # makedirs(gts_path, exist_ok=True)
 
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
         rendering = render(view, gaussians, pipeline, background)
@@ -41,18 +64,23 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         normalizer = mpl.colors.Normalize(vmin=render_depth.min(), vmax=np.percentile(render_depth.cpu().numpy(), 95))
         
         inferno_mapper = cm.ScalarMappable(norm=normalizer,cmap="inferno")
-        colormap_inferno = (inferno_mapper.to_rgba(render_depth.cpu().numpy())*255).astype('uint8')[:, :, :3]
-        rgb = ((rendered_image.cpu().numpy())*255).astype('uint8')
-        depth_video.write(cv2.cvtColor(colormap_inferno, cv2.COLOR_RGB2BGR))
-        rgb_video.write(cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR))
-    cv2.destroyAllWindows()
-    depth_video.release()
-    rgb_video.release()
-        # imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + "_depth_inferno.png"), colormap_inferno)
+        colormap_inferno = (inferno_mapper.to_rgba(render_depth.cpu().numpy())*255).astype('uint8') 
         
-        # torchvision.utils.save_image(rendered_image, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
+        imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + "_depth_inferno.png"), colormap_inferno)
+        
+        torchvision.utils.save_image(rendered_image, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
         # torchvision.utils.save_image(rendered_depth, os.path.join(render_path, '{0:05d}'.format(idx) + "_depth.png"))
         #torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
+
+    rgb_files = get_image_files(render_path)
+    depth_files = get_image_files(render_path, "_depth_inferno")
+    
+    fps = 10
+    create_video(rgb_files, f"{os.path.basename(render_path)}_rgb.mp4")
+    create_video(depth_files, f"{os.path.basename(render_path)}_depth.mp4")
+
+    shutil.rmtree(render_path)
+
 
         
 
