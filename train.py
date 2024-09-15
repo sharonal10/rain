@@ -298,6 +298,8 @@ if __name__ == "__main__":
     parser.add_argument('--num_cams', type=int, default=10)
     
     parser.add_argument("--box_gen", action="store_true", help="Use box_gen initialisation")
+    parser.add_argument("--box_name", type=str, help="name of the .txt file with box params")
+
     parser.add_argument("--bg", action="store_true", help="Don't apply mask to rendered image")
     
     args = parser.parse_args(sys.argv[1:])
