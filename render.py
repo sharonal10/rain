@@ -35,6 +35,7 @@ def create_video(image_files, output_video, fps=10):
     # Read the first image to get the dimensions
     frame = cv2.imread(image_files[0])
     height, width, layers = frame.shape
+    print("shape ", height, width, layers)
     video = cv2.VideoWriter(output_video, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
     
     for image_file in image_files:
