@@ -177,7 +177,7 @@ def read_box(filename):
     box_center = np.array(numbers[0:3])
     box_rotation = np.radians(numbers[3:6])
     box_size = np.array(numbers[6:9])
-    num_points = numbers[9]
+    num_points = int(numbers[9])
 
     return box_center, box_rotation, box_size, num_points
 
