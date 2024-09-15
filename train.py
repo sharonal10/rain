@@ -111,7 +111,10 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
         gt_image = viewpoint_cam.original_image.cuda()
         mask = viewpoint_cam.mask.cuda()
-        masked_image = image*mask
+        if args.bg:
+            masked_image = image
+        else:
+            masked_image = image*mask
         masked_gt_image = gt_image*mask
 
         # from PIL import Image
@@ -295,6 +298,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_cams', type=int, default=10)
     
     parser.add_argument("--box_gen", action="store_true", help="Use box_gen initialisation")
+    parser.add_argument("--bg", action="store_true", help="Don't apply mask to rendered image")
     
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
