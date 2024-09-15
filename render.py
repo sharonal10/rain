@@ -42,7 +42,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         normalizer = mpl.colors.Normalize(vmin=render_depth.min(), vmax=np.percentile(render_depth.cpu().numpy(), 95))
         
         inferno_mapper = cm.ScalarMappable(norm=normalizer,cmap="inferno")
-        colormap_inferno = (inferno_mapper.to_rgba(render_depth.cpu().numpy())*255).astype('uint8') 
+        colormap_inferno = (inferno_mapper.to_rgb(render_depth.cpu().numpy())*255).astype('uint8') 
         rgb = ((rendered_image.cpu().numpy())*255).astype('uint8')
         depth_video.write(colormap_inferno)
         rgb_video.write(rgb)
