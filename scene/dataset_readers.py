@@ -163,6 +163,24 @@ def generate_points_in_box(box_size, num_points):
     
     return points_local
 
+def read_box(filename):
+    # Read the content of the file
+    with open(filename, 'r') as file:
+        # Read the entire content and split it into a list of numbers
+        numbers = list(map(float, file.read().split()))
+
+    # Ensure we have exactly 9 numbers
+    if len(numbers) != 10:
+        raise ValueError("The file does not contain exactly 10 numbers.")
+
+    # Assign the numbers to respective categories
+    box_center = np.array(numbers[0:3])
+    box_rotation = np.radians(numbers[3:6])
+    box_size = np.array(numbers[6:9])
+    num_points = numbers[9]
+
+    return box_center, box_rotation, box_size, num_points
+
 def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
@@ -264,10 +282,8 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
         # box_center = np.array([-0.632, 0.592, 2.72])
         # box_size = np.array([0.318, 0.478, 0.738])
         # box_rotation = np.radians([-41.176, -48.239, -37.687])
-        box_center = np.array([0, 0, 0])
-        box_size = np.array([1, 1, 1])
-        box_rotation = np.radians([0, 0, 0])
-        num_points = 6000
+        box_path = os.path.join(path, "sparse/0/box.txt")
+        box_center, box_rotation, box_size, num_points = read_box(box_path)
 
         points_local = generate_points_in_box(box_size, num_points)
         xyz = transform_points_local_to_global(points_local, box_center, box_rotation)
