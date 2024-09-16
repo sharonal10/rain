@@ -67,14 +67,14 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         inferno_mapper = cm.ScalarMappable(norm=normalizer,cmap="inferno")
         colormap_inferno = (inferno_mapper.to_rgba(render_depth.cpu().numpy())*255).astype('uint8') 
         
-        imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + "_depth_inferno.png"), colormap_inferno)
+        imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + f"_depth_inferno_{iteration}.png"), colormap_inferno)
         
-        torchvision.utils.save_image(rendered_image, os.path.join(render_path, '{0:05d}'.format(idx) + ".png"))
+        torchvision.utils.save_image(rendered_image, os.path.join(render_path, '{0:05d}'.format(idx) + f"_{iteration}.png"))
         # torchvision.utils.save_image(rendered_depth, os.path.join(render_path, '{0:05d}'.format(idx) + "_depth.png"))
         #torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
 
-    rgb_files = get_image_files(render_path)
-    depth_files = get_image_files(render_path, "_depth_inferno")
+    rgb_files = get_image_files(render_path, f"_{iteration}")
+    depth_files = get_image_files(render_path, f"_depth_inferno_{iteration}")
     
     fps = 10
     create_video(rgb_files, f"videos/{os.path.basename(model_path)}_rgb.mp4")
