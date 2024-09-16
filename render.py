@@ -77,8 +77,8 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     depth_files = get_image_files(render_path, f"_depth_inferno_{iteration}")
     
     fps = 10
-    create_video(rgb_files, f"videos/{os.path.basename(model_path)}_rgb.mp4")
-    create_video(depth_files, f"videos/{os.path.basename(model_path)}_depth.mp4")
+    create_video(rgb_files, f"videos/{os.path.basename(model_path)}_{iteration}_rgb.mp4")
+    create_video(depth_files, f"videos/{os.path.basename(model_path)}_{iteration}_depth.mp4")
 
     shutil.rmtree(render_path)
 
