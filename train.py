@@ -15,6 +15,7 @@ from utils.image_utils import psnr
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams
 from lpipsPyTorch import lpips
+from plyfile import PlyData, PlyElement
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True
@@ -209,6 +210,36 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 if (iteration in checkpoint_iterations):
                     print("\n[ITER {}] Saving Checkpoint".format(iteration))
                     torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
+        with torch.no_grad():
+            if (iteration in saving_iterations):
+                # save all together
+                point_cloud_path = os.path.join(args.model_path, "point_cloud/iteration_{}".format(iteration))
+                os.makedirs(point_cloud_path, exist_ok = True)
+                xyz = gaussians_list[0]._xyz.detach().cpu().numpy()
+                print('shape', xyz.shape)
+                f_dc = gaussians_list[0]._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
+                f_rest = gaussians_list[0]._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
+                opacities = gaussians_list[0]._opacity.detach().cpu().numpy()
+                scale = gaussians_list[0]._scaling.detach().cpu().numpy()
+                rotation = gaussians_list[0]._rotation.detach().cpu().numpy()
+
+                for gaussians in gaussians_list[1:]:
+                    xyz = np.concatenate((xyz, gaussians._xyz.detach().cpu().numpy()), axis=0)
+                    print('shape', xyz.shape)
+                    f_dc = np.concatenate((f_dc, gaussians._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
+                    f_rest = np.concatenate((f_rest, gaussians._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
+                    opacities = np.concatenate((opacities, gaussians._opacity.detach().cpu().numpy()), axis=0)
+                    scale = np.concatenate((scale, gaussians._scaling.detach().cpu().numpy()), axis=0)
+                    rotation = np.concatenate((rotation, gaussians._rotation.detach().cpu().numpy()), axis=0)
+                normals = np.zeros_like(xyz)
+                
+                dtype_full = [(attribute, 'f4') for attribute in gaussians_list[0].construct_list_of_attributes()]
+
+                elements = np.empty(xyz.shape[0], dtype=dtype_full)
+                attributes = np.concatenate((xyz, normals, f_dc, f_rest, opacities, scale, rotation), axis=1)
+                elements[:] = list(map(tuple, attributes))
+                el = PlyElement.describe(elements, 'vertex')
+                PlyData([el]).write(point_cloud_path)
                     
 
 def prepare_output_and_logger(args, output_path, exp_name, project_name):
