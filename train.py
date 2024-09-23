@@ -213,7 +213,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         with torch.no_grad():
             if (iteration in saving_iterations):
                 # save all together
-                point_cloud_path = os.path.join(args.model_path, "point_cloud/iteration_{}".format(iteration))
+                point_cloud_path = os.path.join(dataset.model_path, "point_cloud/iteration_{}".format(iteration))
                 os.makedirs(point_cloud_path, exist_ok = True)
                 xyz = gaussians_list[0]._xyz.detach().cpu().numpy()
                 print('shape', xyz.shape)
