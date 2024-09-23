@@ -232,14 +232,14 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     scale = np.concatenate((scale, gaussians._scaling.detach().cpu().numpy()), axis=0)
                     rotation = np.concatenate((rotation, gaussians._rotation.detach().cpu().numpy()), axis=0)
                 normals = np.zeros_like(xyz)
-                
+
                 dtype_full = [(attribute, 'f4') for attribute in gaussians_list[0].construct_list_of_attributes()]
 
                 elements = np.empty(xyz.shape[0], dtype=dtype_full)
                 attributes = np.concatenate((xyz, normals, f_dc, f_rest, opacities, scale, rotation), axis=1)
                 elements[:] = list(map(tuple, attributes))
                 el = PlyElement.describe(elements, 'vertex')
-                PlyData([el]).write(point_cloud_path)
+                PlyData([el]).write(os.path.join(point_cloud_path, "point_cloud.ply"))
                     
 
 def prepare_output_and_logger(args, output_path, exp_name, project_name):
