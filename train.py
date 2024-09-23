@@ -3,7 +3,7 @@ import torch
 import random
 from random import randint
 from utils.loss_utils import l1_loss, ssim
-from gaussian_renderer import render, network_gui
+from gaussian_renderer import render, network_gui, render_multi
 import sys
 from scene import Scene, GaussianModel
 from utils.general_utils import safe_state
@@ -16,6 +16,8 @@ from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams
 from lpipsPyTorch import lpips
 from plyfile import PlyData, PlyElement
+from PIL import Image
+from utils.general_utils import PILtoTorch
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True
@@ -203,6 +205,34 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
                         gaussians.reset_opacity()
 
+        # also backprop for all, assuming bg, pipe etc are the same
+        render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass)
+        image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
+
+        gt_image = viewpoint_cam.original_image.cuda()
+
+        mask = Image.open(os.path.join(dataset.source_path, 'full_masks', f'{viewpoint_cam.image_name}.png'))
+        mask = PILtoTorch(mask, (viewpoint_cam.image_width, viewpoint_cam.image_height)).cuda()
+        
+        if args.bg:
+            masked_image = image
+        else:
+            masked_image = image*mask
+        masked_gt_image = gt_image*mask
+
+        # assert False
+        Ll1 = l1_loss(masked_image, masked_gt_image)
+        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
+        loss.backward() # will accumulate
+
+        for sub_iter in range(len(gaussians_list)):
+            gaussians = gaussians_list[sub_iter]
+            scene = scene_list[sub_iter]
+            viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
+
+            with torch.no_grad():
+                
+
                 if iteration < opt.iterations:
                     gaussians.optimizer.step()
                     gaussians.optimizer.zero_grad(set_to_none = True)
@@ -210,6 +240,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 if (iteration in checkpoint_iterations):
                     print("\n[ITER {}] Saving Checkpoint".format(iteration))
                     torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
+
+        
+
         with torch.no_grad():
             if (iteration in saving_iterations):
                 # save all together
