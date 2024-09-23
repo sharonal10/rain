@@ -70,6 +70,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             gaussians = gaussians_list[sub_iter]
             scene = scene_list[sub_iter]
             viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
+            if viewpoint_cam.mask.cuda().sum() < 5:
+                continue
             if network_gui.conn == None:
                 network_gui.try_connect()
             while network_gui.conn != None:
