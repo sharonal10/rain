@@ -239,6 +239,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 attributes = np.concatenate((xyz, normals, f_dc, f_rest, opacities, scale, rotation), axis=1)
                 elements[:] = list(map(tuple, attributes))
                 el = PlyElement.describe(elements, 'vertex')
+                print(os.path.join(point_cloud_path, "point_cloud.ply"))
                 PlyData([el]).write(os.path.join(point_cloud_path, "point_cloud.ply"))
                     
 
