@@ -24,8 +24,6 @@ class CameraInfo(NamedTuple):
     width: int
     height: int
     mask: np.array
-    mask_path: str
-    mask_name: str
 
 
 class SceneInfo(NamedTuple):
@@ -58,7 +56,7 @@ def getNerfppNorm(cam_info):
 
     return {"translate": translate, "radius": radius}
 
-def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, masks_folder):
+def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, masks_folder, mask_id):
     cam_infos = []
     for idx, key in enumerate(cam_extrinsics):
         sys.stdout.write('\r')
@@ -90,13 +88,12 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder, masks_folde
         image_name = os.path.basename(image_path).split(".")[0]
         image = Image.open(image_path)
 
-        mask_path = os.path.join(masks_folder, os.path.basename(extr.name))
-        mask_name = os.path.basename(mask_path).split(".")[0]
+        mask_path = os.path.join(masks_folder, os.path.splitext(os.path.basename(extr.name))[0], f"{mask_id:03}.png")
         mask = Image.open(mask_path)
 
         cam_info = CameraInfo(uid=uid, R=R, T=T, FovY=FovY, FovX=FovX, image=image,
                               image_path=image_path, image_name=image_name, width=width, height=height,
-                              mask=mask, mask_path=mask_path, mask_name=mask_name)
+                              mask=mask)
         cam_infos.append(cam_info)
     sys.stdout.write('\n')
     return cam_infos
@@ -181,7 +178,7 @@ def read_box(filename):
 
     return box_center, box_rotation, box_size, num_points
 
-def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
+def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=None):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
@@ -195,7 +192,7 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
 
     reading_dir = "images" if images == None else images
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics,
-                                           images_folder=os.path.join(path, reading_dir), masks_folder=os.path.join(path, 'masks'))
+                                           images_folder=os.path.join(path, reading_dir), masks_folder=os.path.join(path, 'masks'), mask_id=mask_id)
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
     llffhold = len(cam_infos)/args_dict['num_cams']
     print('args.eval', args_dict['eval'])
@@ -282,7 +279,8 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None):
         # box_center = np.array([-0.632, 0.592, 2.72])
         # box_size = np.array([0.318, 0.478, 0.738])
         # box_rotation = np.radians([-41.176, -48.239, -37.687])
-        box_path = os.path.join(path, f"sparse/0/{args_dict['box_name']}.txt")
+        box_path = os.path.join(path, f"sparse/0/{args_dict['box_name']}_{mask_id:03}.txt")
+        print(f'loading box from {box_path}')
         box_center, box_rotation, box_size, num_points = read_box(box_path)
 
         points_local = generate_points_in_box(box_size, num_points)
