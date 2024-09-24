@@ -11,7 +11,7 @@ class Scene:
 
     gaussians : GaussianModel
 
-    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, resolution_scales=[1.0], args_dict=None, mask_id=None):
+    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, resolution_scales=[1.0], args_dict=None, mask_id=None, render_source=None):
         self.model_path = args.model_path
         self.loaded_iter = None
         self.gaussians = gaussians
@@ -65,7 +65,7 @@ class Scene:
 
         if self.loaded_iter:
             self.gaussians.load_ply(os.path.join(self.model_path,
-                                                           "point_cloud",
+                                                           render_source,
                                                            "iteration_" + str(self.loaded_iter),
                                                            "point_cloud.ply"))
         else:

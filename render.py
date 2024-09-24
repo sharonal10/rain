@@ -93,7 +93,7 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
             divide_ratio = 0.8
         print(f"Set divide_ratio to {divide_ratio}")
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio)
-        scene = Scene(dataset, gaussians, load_iteration=iteration, args_dict=args_dict, mask_id=0)
+        scene = Scene(dataset, gaussians, load_iteration=iteration, args_dict=args_dict, mask_id=0, render_source=args_dict['render_source'])
 
         bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
@@ -115,6 +115,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_cams", default=10, type=int)
     parser.add_argument("--ours_new", action="store_true", help="Use our initialisation version 2")
     parser.add_argument("--ours", action="store_true", help="Use our initialisation version 2")
+    parser.add_argument("--render_source", default="point_cloud")
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
 
