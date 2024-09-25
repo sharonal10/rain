@@ -45,9 +45,9 @@ def create_video(image_files, output_video, fps=10):
     video.release()
 
 
-def render_set(model_path, name, iteration, views, gaussians, pipeline, background):
+def render_set(model_path, name, iteration, views, gaussians, pipeline, background, render_source):
     # render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
-    render_path = os.path.join(model_path, "to_delete")
+    render_path = os.path.join(model_path, f"to_delete_{render_source}_{iteration}")
     # gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
 
     makedirs(render_path, exist_ok=True)
@@ -67,18 +67,18 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
         inferno_mapper = cm.ScalarMappable(norm=normalizer,cmap="inferno")
         colormap_inferno = (inferno_mapper.to_rgba(render_depth.cpu().numpy())*255).astype('uint8') 
         
-        imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + f"_depth_inferno_{iteration}.png"), colormap_inferno)
+        imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + f"_depth_inferno_{render_source}_{iteration}.png"), colormap_inferno)
         
-        torchvision.utils.save_image(rendered_image, os.path.join(render_path, '{0:05d}'.format(idx) + f"_{iteration}.png"))
+        torchvision.utils.save_image(rendered_image, os.path.join(render_path, '{0:05d}'.format(idx) + f"_{render_source}_{iteration}.png"))
         # torchvision.utils.save_image(rendered_depth, os.path.join(render_path, '{0:05d}'.format(idx) + "_depth.png"))
         #torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
 
-    rgb_files = get_image_files(render_path, f"_{iteration}")
-    depth_files = get_image_files(render_path, f"_depth_inferno_{iteration}")
+    rgb_files = get_image_files(render_path, f"_{render_source}_{iteration}")
+    depth_files = get_image_files(render_path, f"_depth_inferno_{render_source}_{iteration}")
     
     fps = 10
-    create_video(rgb_files, f"videos/{os.path.basename(model_path)}_{iteration}_rgb.mp4")
-    create_video(depth_files, f"videos/{os.path.basename(model_path)}_{iteration}_depth.mp4")
+    create_video(rgb_files, f"videos/{os.path.basename(model_path)}_{render_source}_{iteration}_rgb.mp4")
+    create_video(depth_files, f"videos/{os.path.basename(model_path)}_{render_source}_{iteration}_depth.mp4")
 
     shutil.rmtree(render_path)
 
@@ -99,10 +99,10 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
         if not skip_train:
-             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background)
+             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, args_dict['render_source'])
 
         if not skip_test:
-             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background)
+             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, args_dict['render_source'])
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Testing script parameters")
