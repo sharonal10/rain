@@ -27,11 +27,11 @@ def get_centroid(tensor_img, threshold=1/256, save_idx=0, to_save=False, save_di
         # Calculate the centroid (mean of x and y indices)
         y = indices[0].float()
         x = indices[1].float()
-        ret = (int(torch.mean(y).detach()), int(torch.mean(x).detach()))
+        ret = (int(torch.mean(x).detach()), int(torch.mean(y).detach()))
     
     if to_save:
         res = (brightness > threshold) * 32/256
-        res[ret[0], ret[1]] = 1
+        res[ret[1], ret[0]] = 1
         save_image(res.unsqueeze(0).repeat(3, 1, 1), _opj(save_dir, f'brightness_{save_idx}.png'))
 
     return ret
