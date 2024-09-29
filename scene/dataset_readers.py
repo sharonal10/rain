@@ -289,7 +289,10 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=
         points_local = generate_points_in_box(box_size, num_points)
         xyz = transform_points_local_to_global(points_local, box_center, box_rotation)
         shs = np.random.random((num_points, 3))
-        ply_path = os.path.join(path, "sparse/0/points3D.ply")
+        if custom_ply_path is not None:
+            ply_path = custom_ply_path
+        else:
+            ply_path = os.path.join(path, "sparse/0/points3D.ply")
         print(f'storing in {ply_path}')
         storePly(ply_path, xyz, SH2RGB(shs) * 255)
     elif not args_dict['render_only'] and args_dict['use_orig']:
