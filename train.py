@@ -131,7 +131,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             assert image.max() <= 1.0, image.max()
 
             if sub_iter in to_compare:
-                to_compare_renders[sub_iter] = image.clone()
+                to_compare_renders[sub_iter] = image
 
             if viewpoint_cam.mask.cuda().sum() < 5:
                 if (iteration in saving_iterations):
@@ -150,7 +150,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
             Ll1 = l1_loss(masked_image, masked_gt_image)
             loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-            loss.backward()
+            loss.backward(retain_graph=True)
 
             iter_end.record()
 
