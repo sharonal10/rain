@@ -20,19 +20,21 @@ def get_brightness(tensor_img):
 
 def get_centroid(tensor_img, threshold=1/256, save_idx=0, to_save=False, save_dir=None):
     brightness = get_brightness(tensor_img)
-    if to_save:
-        res = (brightness > threshold) * 32/256
-        res[int(torch.mean(y)), int(torch.mean(x))] = 1
-        save_image(res.unsqueeze(0).repeat(3, 1, 1), _opj(save_dir, f'brightness_{save_idx}.png'))
-    
     indices = (brightness > threshold).nonzero(as_tuple=True)
     if len(indices[0]) == 0:  # No pixels above threshold
-        return (tensor_img.shape[1]//2, tensor_img.shape[2]//2)
+        ret = (tensor_img.shape[1]//2, tensor_img.shape[2]//2)
     else:
         # Calculate the centroid (mean of x and y indices)
         y = indices[0].float()
         x = indices[1].float()
-        return torch.mean(x).detach(), torch.mean(y).detach()
+        ret = (torch.mean(x).detach(), torch.mean(y).detach())
+    
+    if to_save:
+        res = (brightness > threshold) * 32/256
+        res[ret[0], ret[1]] = 1
+        save_image(res.unsqueeze(0).repeat(3, 1, 1), _opj(save_dir, f'brightness_{save_idx}.png'))
+
+    return ret
 
 def align_image(tensor_img, reference_centroid, target_centroid, save_idx=0, to_save=False, save_dir=None):
     offset_x = int(target_centroid[0] - reference_centroid[0])
