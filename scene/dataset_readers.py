@@ -181,7 +181,7 @@ def read_box(filename):
 
     return box_center, box_rotation, box_size, num_points
 
-def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=None):
+def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=None, custom_ply_path=None):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
@@ -293,7 +293,10 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=
         print(f'storing in {ply_path}')
         storePly(ply_path, xyz, SH2RGB(shs) * 255)
     elif not args_dict['render_only'] and args_dict['use_orig']:
-        ply_path = os.path.join(path, "sparse/0/points3D.ply")
+        if custom_ply_path is not None:
+            ply_path = custom_ply_path
+        else:
+            ply_path = os.path.join(path, "sparse/0/points3D.ply")
         bin_path = os.path.join(path, "sparse/0/points3D.bin")
         txt_path = os.path.join(path, "sparse/0/points3D.txt")
 
