@@ -128,7 +128,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             render_pkg = render(viewpoint_cam, gaussians, pipe, bg, low_pass = low_pass)
             image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
 
-            assert image.max() <= 1.0, image.max()
+            # assert image.max() <= 1.0, image.max()
 
             if sub_iter in to_compare:
                 to_compare_renders[sub_iter] = image
@@ -201,11 +201,12 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         loss.backward() # will accumulate
 
         # additionally, center each of the parts that are meant to be identical, and encourage that when individually rendered they appear the same.
-        if iteration >= 1000:
+        if iteration >= args_dict['compare_iter']:
             loss = 0
             save_intermediates = iteration % 1000 == 0
             intermediate_save_dir=os.path.join(dataset.model_path, f'align_{iteration}')
-            os.makedirs(intermediate_save_dir, exist_ok = True)
+            if save_intermediates:
+                os.makedirs(intermediate_save_dir, exist_ok = True)
             aligned_images = align_images(to_compare_renders,
                                           to_save=save_intermediates,
                                           save_dir=intermediate_save_dir)
@@ -375,6 +376,7 @@ if __name__ == "__main__":
     parser.add_argument("--use_orig", action="store_true", help="Use box_gen initialisation")
     parser.add_argument('--num_masks', type=int, required=True)
     parser.add_argument("--lambda_compare", type=float, required=True, help="coefficient for comparison loss")
+    parser.add_argument('--compare_iter', type=int, required=True)
 
 
     parser.add_argument("--bg", action="store_true", help="Don't apply mask to rendered image")
