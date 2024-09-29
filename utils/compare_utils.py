@@ -15,7 +15,7 @@ def save_image(image, filename):
 def get_brightness(tensor_img):
     r, g, b = tensor_img[0, :, :], tensor_img[1, :, :], tensor_img[2, :, :]
     brightness = r + g + b
-    assert brightness.shape == (512, 512)
+    print(brightness.shape)
     return brightness
 
 def get_centroid(tensor_img, threshold=1/256, save_idx=0, to_save=False, save_dir=None):
@@ -48,8 +48,6 @@ def align_image(tensor_img, reference_centroid, target_centroid, save_idx=0, to_
 
 def align_images(images_dict, to_save=False, save_dir=None):
     images = list(images_dict.values())
-
-    assert images[0].shape == (3, 512, 512), images[0].shape
 
     reference_centroid = (images[0].shape[1]//2, images[0].shape[2]//2)
 
