@@ -150,7 +150,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
             Ll1 = l1_loss(masked_image, masked_gt_image)
             loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-            loss.backward(retain_graph=True)
+            loss.backward()
 
             iter_end.record()
 
@@ -198,10 +198,11 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         # assert False
         Ll1 = l1_loss(masked_image, masked_gt_image)
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-        loss.backward(retain_graph=True) # will accumulate
+        loss.backward() # will accumulate
 
         # additionally, center each of the parts that are meant to be identical, and encourage that when individually rendered they appear the same.
         if True: #iteration >= 1000:
+            loss = 0
             save_intermediates = iteration % 1000 == 0
             intermediate_save_dir=os.path.join(dataset.model_path, f'align_{iteration}')
             os.makedirs(intermediate_save_dir, exist_ok = True)
@@ -214,8 +215,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     img2 = aligned_images[j]
 
                     Ll1 = l1_loss(img1, img2)
-                    loss = ((1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(img1, img2))) * args_dict['lambda_compare']
-                    loss.backward()
+                    loss += ((1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(img1, img2))) * args_dict['lambda_compare']
+            loss.backward()
         assert iteration < 3
 
         for sub_iter in range(len(gaussians_list)):
