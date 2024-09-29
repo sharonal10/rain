@@ -27,7 +27,7 @@ def get_centroid(tensor_img, threshold=1/256, save_idx=0, to_save=False, save_di
         # Calculate the centroid (mean of x and y indices)
         y = indices[0].float()
         x = indices[1].float()
-        ret = (int(torch.mean(x).detach()), int(torch.mean(y).detach()))
+        ret = (int(torch.mean(y).detach()), int(torch.mean(x).detach()))
     
     if to_save:
         res = (brightness > threshold) * 32/256
