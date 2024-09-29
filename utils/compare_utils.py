@@ -27,7 +27,7 @@ def get_centroid(tensor_img, threshold=1/256, save_idx=0, to_save=False, save_di
     
     indices = (brightness > threshold).nonzero(as_tuple=True)
     if len(indices[0]) == 0:  # No pixels above threshold
-        return (256, 256)
+        return (tensor_img.shape[1]//2, tensor_img.shape[2]//2)
     else:
         # Calculate the centroid (mean of x and y indices)
         y = indices[0].float()
@@ -51,10 +51,11 @@ def align_images(images_dict, to_save=False, save_dir=None):
 
     assert images[0].shape == (3, 512, 512), images[0].shape
 
-    reference_centroid = (256, 256)
+    reference_centroid = (images[0].shape[1]//2, images[0].shape[2]//2)
 
     aligned_images = []
     for i, img in enumerate(images):
+        assert img.shape == images[0].shape, (i, img.shape, images[0].shape)
         centroid = get_centroid(img, save_idx=i, to_save=to_save, save_dir=save_dir)
         centered = align_image(img, reference_centroid, centroid, save_idx=i, to_save=to_save, save_dir=save_dir)
         aligned_images.append(centered)
