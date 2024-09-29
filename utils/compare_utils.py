@@ -36,9 +36,9 @@ def get_centroid(tensor_img, threshold=1/256, save_idx=0, to_save=False, save_di
 
     return ret
 
-def align_image(tensor_img, reference_centroid, target_centroid, save_idx=0, to_save=False, save_dir=None):
-    offset_x = int(target_centroid[0] - reference_centroid[0])
-    offset_y = int(target_centroid[1] - reference_centroid[1])
+def align_image(tensor_img, reference_centroid, curr_centroid, save_idx=0, to_save=False, save_dir=None):
+    offset_x = int(reference_centroid[0] - curr_centroid[0])
+    offset_y = int(reference_centroid[1] - curr_centroid[1])
     
     # Apply the shift using torch.roll for each channel
     aligned_image = torch.roll(tensor_img, shifts=(offset_y, offset_x), dims=(1, 2))
