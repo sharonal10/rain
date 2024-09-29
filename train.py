@@ -18,6 +18,7 @@ from lpipsPyTorch import lpips
 from plyfile import PlyData, PlyElement
 from PIL import Image
 from utils.general_utils import PILtoTorch
+from utils.compare_utils import align_images
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True
@@ -65,7 +66,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     scene_order = list(range(len(scene.getTrainCameras())))
     random.shuffle(scene_order)
 
+    to_compare = [1, 2, 3, 4] # indices of gaussians that should be similar to each other
     for iteration in range(first_iter, opt.iterations + 1):
+        to_compare_renders = {}
         if not viewpoint_stack:
             viewpoint_stack = scene_order.copy()
         viewpoint_idx = viewpoint_stack.pop()
@@ -73,12 +76,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             gaussians = gaussians_list[sub_iter]
             scene = scene_list[sub_iter]
             viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
-            if viewpoint_cam.mask.cuda().sum() < 5:
-                if (iteration in saving_iterations):
-                    with torch.no_grad():
-                        print("\n[ITER {}] Saving Gaussians".format(iteration))
-                        scene.save(iteration)
-                continue
             if network_gui.conn == None:
                 network_gui.try_connect()
             while network_gui.conn != None:
@@ -131,6 +128,18 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             render_pkg = render(viewpoint_cam, gaussians, pipe, bg, low_pass = low_pass)
             image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
 
+            assert image.max() <= 1.0, image.max()
+
+            if sub_iter in to_compare:
+                to_compare_renders[sub_iter] = image
+
+            if viewpoint_cam.mask.cuda().sum() < 5:
+                if (iteration in saving_iterations):
+                    with torch.no_grad():
+                        print("\n[ITER {}] Saving Gaussians".format(iteration))
+                        scene.save(iteration)
+                continue
+
             gt_image = viewpoint_cam.original_image.cuda()
             mask = viewpoint_cam.mask.cuda()
             if args.bg:
@@ -138,7 +147,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             else:
                 masked_image = image*mask
             masked_gt_image = gt_image*mask
-            
+
             Ll1 = l1_loss(masked_image, masked_gt_image)
             loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
             loss.backward()
@@ -190,6 +199,24 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         Ll1 = l1_loss(masked_image, masked_gt_image)
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
         loss.backward() # will accumulate
+
+        # additionally, center each of the parts that are meant to be identical, and encourage that when individually rendered they appear the same.
+        if iteration >= 1000:
+            save_intermediates = iteration % 1000 == 0
+            intermediate_save_dir=os.path.join(dataset.model_path, f'align_{iteration}')
+            os.makedirs(intermediate_save_dir, exist_ok = True)
+            aligned_images = align_images(to_compare_renders,
+                                          to_save=save_intermediates,
+                                          save_dir=intermediate_save_dir)
+            for i in range(len(aligned_images)):
+                for j in range(i + 1, len(aligned_images)):
+                    img1 = aligned_images[i]
+                    img2 = aligned_images[j]
+
+                    Ll1 = l1_loss(img1, img2)
+                    loss = ((1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(img1, img2))) * args_dict['lambda_compare']
+                    loss.backward()
+            
 
         for sub_iter in range(len(gaussians_list)):
             gaussians = gaussians_list[sub_iter]
@@ -347,6 +374,7 @@ if __name__ == "__main__":
     parser.add_argument("--box_name", type=str, help="name of the .txt file with box params")
     parser.add_argument("--use_orig", action="store_true", help="Use box_gen initialisation")
     parser.add_argument('--num_masks', type=int, required=True)
+    parser.add_argument("--lambda_compare", type=float, required=True, help="coefficient for comparison loss")
 
 
     parser.add_argument("--bg", action="store_true", help="Don't apply mask to rendered image")
