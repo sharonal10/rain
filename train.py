@@ -198,7 +198,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         # assert False
         Ll1 = l1_loss(masked_image, masked_gt_image)
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-        loss.backward() # will accumulate
+        loss.backward(retain_graph=True) # will accumulate
 
         # additionally, center each of the parts that are meant to be identical, and encourage that when individually rendered they appear the same.
         if True: #iteration >= 1000:
