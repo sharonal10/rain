@@ -131,7 +131,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             assert image.max() <= 1.0, image.max()
 
             if sub_iter in to_compare:
-                to_compare_renders[sub_iter] = image
+                to_compare_renders[sub_iter] = image.clone()
 
             if viewpoint_cam.mask.cuda().sum() < 5:
                 if (iteration in saving_iterations):
