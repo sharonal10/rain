@@ -201,9 +201,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         loss.backward() # will accumulate
 
         # additionally, center each of the parts that are meant to be identical, and encourage that when individually rendered they appear the same.
-        if iteration >= 1000:
+        if True: #iteration >= 1000:
             loss = 0
-            save_intermediates = iteration % 1000 == 0
+            save_intermediates = True #iteration % 1000 == 0
             intermediate_save_dir=os.path.join(dataset.model_path, f'align_{iteration}')
             os.makedirs(intermediate_save_dir, exist_ok = True)
             aligned_images = align_images(to_compare_renders,
@@ -217,6 +217,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     Ll1 = l1_loss(img1, img2)
                     loss += ((1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(img1, img2))) * args_dict['lambda_compare']
             loss.backward()
+        assert iteration < 3
 
         for sub_iter in range(len(gaussians_list)):
             gaussians = gaussians_list[sub_iter]
