@@ -145,7 +145,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
             if iteration < args_dict['second_phase_begin']: # in second phase, apply mask to rendered image
                 masked_image = image
-            elif not args_dict['mask_to_compare_only']:
+            elif not args_dict['mask_on_compare_only']:
                 masked_image = image*mask
             elif sub_iter in to_compare:
                 masked_image = image*mask
