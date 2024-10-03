@@ -30,7 +30,25 @@ class GaussianModel:
         self.rotation_activation = torch.nn.functional.normalize
 
 
-    def __init__(self, sh_degree : int, divide_ratio : float):
+    def define_plane(self, point_on_plane, normal_vector):
+        A, B, C = normal_vector
+        x0, y0, z0 = point_on_plane
+        D = -(A * x0 + B * y0 + C * z0)
+        return torch.tensor([A, B, C, D])
+    
+    def check_side_of_plane(self, point, plane):
+        A, B, C, D = plane
+        x, y, z = point
+        return A * x + B * y + C * z + D >= 0
+
+    def mirror_point_across_plane(self, point, plane):
+        A, B, C, D = plane
+        normal = torch.tensor([A, B, C])
+        distance = (A * point[0] + B * point[1] + C * point[2] + D) / torch.norm(normal)
+        mirrored_point = point - 2 * distance * (normal / torch.norm(normal))
+        return mirrored_point
+
+    def __init__(self, sh_degree : int, divide_ratio : float, point_on_plane, normal_vector):
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree  
         self._xyz = torch.empty(0)
@@ -47,6 +65,7 @@ class GaussianModel:
         self.spatial_lr_scale = 0
         self.setup_functions()
         self.divide_ratio = divide_ratio
+        self.plane = self.define_plane(point_on_plane, normal_vector)
 
     def capture(self):
         return (
