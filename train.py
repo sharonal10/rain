@@ -142,10 +142,16 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
             gt_image = viewpoint_cam.original_image.cuda()
             mask = viewpoint_cam.mask.cuda()
-            if args.bg:
+
+            if iteration < args_dict['second_phase_begin']: # in second phase, apply mask to rendered image
                 masked_image = image
-            else:
+            elif not args_dict['mask_to_compare_only']:
                 masked_image = image*mask
+            elif sub_iter in to_compare:
+                masked_image = image*mask
+            else:
+                masked_image = image
+                
             masked_gt_image = gt_image*mask
 
             Ll1 = l1_loss(masked_image, masked_gt_image)
@@ -189,10 +195,13 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         mask = Image.open(os.path.join(dataset.source_path, 'full_masks', f'{viewpoint_cam.image_name}.png'))
         mask = PILtoTorch(mask, (viewpoint_cam.image_width, viewpoint_cam.image_height)).cuda()
         
-        if args.bg:
+        if iteration < args_dict['second_phase_begin']: # in second phase, apply mask to rendered image
             masked_image = image
-        else:
+        elif args_dict['mask_to_full']: # should we apply the mask to the full object?
             masked_image = image*mask
+        else:
+            masked_image = image
+
         masked_gt_image = gt_image*mask
 
         # assert False
@@ -201,7 +210,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         loss.backward() # will accumulate
 
         # additionally, center each of the parts that are meant to be identical, and encourage that when individually rendered they appear the same.
-        if iteration >= args_dict['compare_iter']:
+        if iteration >= args_dict['second_phase_begin']:
             loss = 0
             save_intermediates = iteration % 1000 == 0
             intermediate_save_dir=os.path.join(dataset.model_path, f'align_{iteration}')
@@ -376,16 +385,18 @@ if __name__ == "__main__":
     parser.add_argument("--use_orig", action="store_true", help="Use box_gen initialisation")
     parser.add_argument('--num_masks', type=int, required=True)
     parser.add_argument("--lambda_compare", type=float, required=True, help="coefficient for comparison loss")
-    parser.add_argument('--compare_iter', type=int, required=True)
-
-
-    parser.add_argument("--bg", action="store_true", help="Don't apply mask to rendered image")
+    parser.add_argument("--second_phase_begin", type=int, required=True, help='which iteration to begin the second phase, where we apply mask to rendered image')
+    parser.add_argument("--mask_on_compare_only", action="store_true", help="apply mask to rendered image only if they are to be compared")
+    parser.add_argument("--mask_to_full", action="store_true", help="apply mask to full object during second phase")
     
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
     args.white_background = args.white_bg
     args.render_only = False
     print("Optimizing " + args.model_path)
+
+    # second phase: begin comparison loss. At the same time, start applying the mask to the rendered image, so the regular loss doesn't optimize in the opposite direction.
+    assert args.iterations > args.second_phase_begin, "--iterations is total of first phase + second phase iterations and should be larger than --second_phase_begin"
 
     safe_state(args.quiet)
     
