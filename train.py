@@ -194,7 +194,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         # also backprop for all, assuming bg, pipe etc are the same
         # ablation: should the whole object rendering affect gaussians?
         # or just the offset?
-        if args['whole_for_offset_only']:
+        if args_dict['whole_for_offset_only']:
             for gaussians in gaussians_list:
                 for param_group in gaussians_list.optimizer.param_groups:
                     for param in param_group['params']:
@@ -241,7 +241,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
 
         
-        if args['whole_for_offset_only']:
+        if args_dict['whole_for_offset_only']:
             for gaussians in gaussians_list:
                 for param_group in gaussians_list.optimizer.param_groups:
                     for param in param_group['params']:
