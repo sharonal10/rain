@@ -201,7 +201,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                         param.requires_grad = False
 
         render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass)
-        image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
+        image = render_pkg["render"]
 
         if iteration % 1000 == 0 or iteration < 4:
             to_save_image = Image.fromarray((image.detach().cpu().numpy() * 255).astype(np.uint8))

@@ -150,10 +150,4 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
         rotations = rotations,
         cov3D_precomp = cov3D_precomp)
 
-    print('radii', radii.cpu())
-
-    return {"render": rendered_image,
-            "viewspace_points": screenspace_points,
-            "visibility_filter" : radii > 0,
-            "radii": radii,
-            "depth": depth}
+    return {"render": rendered_image}
