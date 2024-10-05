@@ -49,7 +49,7 @@ class GaussianModel:
         self.divide_ratio = divide_ratio
 
         self.centers = [] # represents the offset applied to create other instances
-        self.center_optimizers = [None]
+        self.center_optimizers = []
 
     def capture(self):
         # TODO: add center-related params
