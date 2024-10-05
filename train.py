@@ -196,7 +196,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         # or just the offset?
         if args_dict['whole_for_offset_only']:
             for gaussians in gaussians_list:
-                for param_group in gaussians_list.optimizer.param_groups:
+                for param_group in gaussians.optimizer.param_groups:
                     for param in param_group['params']:
                         param.requires_grad = False
 
@@ -244,7 +244,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         
         if args_dict['whole_for_offset_only']:
             for gaussians in gaussians_list:
-                for param_group in gaussians_list.optimizer.param_groups:
+                for param_group in gaussians.optimizer.param_groups:
                     for param in param_group['params']:
                         param.requires_grad = True
 
