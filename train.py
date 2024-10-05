@@ -274,6 +274,15 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     opacities = np.concatenate((opacities, gaussians._opacity.detach().cpu().numpy()), axis=0)
                     scale = np.concatenate((scale, gaussians._scaling.detach().cpu().numpy()), axis=0)
                     rotation = np.concatenate((rotation, gaussians._rotation.detach().cpu().numpy()), axis=0)
+
+                    for center in gaussians.centers:
+                        xyz = np.concatenate((xyz, (gaussians._xyz+center).detach().cpu().numpy()), axis=0)
+                        print('shape', xyz.shape)
+                        f_dc = np.concatenate((f_dc, gaussians._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
+                        f_rest = np.concatenate((f_rest, gaussians._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
+                        opacities = np.concatenate((opacities, gaussians._opacity.detach().cpu().numpy()), axis=0)
+                        scale = np.concatenate((scale, gaussians._scaling.detach().cpu().numpy()), axis=0)
+                        rotation = np.concatenate((rotation, gaussians._rotation.detach().cpu().numpy()), axis=0)
                 normals = np.zeros_like(xyz)
 
                 dtype_full = [(attribute, 'f4') for attribute in gaussians_list[0].construct_list_of_attributes()]
