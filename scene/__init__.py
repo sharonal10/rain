@@ -75,6 +75,11 @@ class Scene:
         point_cloud_path = os.path.join(self.model_path, "point_cloud_{}/iteration_{}".format(self.mask_id, iteration))
         self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud.ply"))
 
+        for i, center in enumerate(self.gaussians.centers):
+            point_cloud_path = os.path.join(self.model_path, "point_cloud_{}_{}/iteration_{}".format(self.mask_id, i, iteration))
+            self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud.ply"), center)
+            
+
     def getTrainCameras(self, scale=1.0):
         return self.train_cameras[scale]
 

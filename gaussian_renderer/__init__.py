@@ -79,7 +79,12 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             "depth": depth}
 
 def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, low_pass = 0.3):
-    xyz = torch.cat([pc.get_xyz for pc in gaussians_list], dim=0)
+    xyz = []
+    for pc in gaussians_list:
+        xyz.append(pc.get_xyz)
+        for center in pc.centers:
+            xyz.append(pc.get_xyz + center)
+    xyz = torch.cat(xyz, dim=0)
     screenspace_points = torch.zeros_like(xyz, dtype=xyz.dtype, requires_grad=True, device="cuda") + 0
     try:
         screenspace_points.retain_grad()

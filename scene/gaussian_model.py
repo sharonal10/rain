@@ -48,7 +48,11 @@ class GaussianModel:
         self.setup_functions()
         self.divide_ratio = divide_ratio
 
+        self.centers = [] # represents the offset applied to create other instances
+        self.center_optimizers = [None]
+
     def capture(self):
+        # TODO: add center-related params
         return (
             self.active_sh_degree,
             self._xyz,
@@ -65,6 +69,7 @@ class GaussianModel:
         )
     
     def restore(self, model_args, training_args):
+        # TODO: add center-related params
         (self.active_sh_degree, 
         self._xyz, 
         self._features_dc, 
@@ -136,7 +141,7 @@ class GaussianModel:
         self._opacity = nn.Parameter(opacities.requires_grad_(True))
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
 
-    def training_setup(self, training_args):
+    def training_setup(self, training_args, centers):
         self.percent_dense = training_args.percent_dense
         self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
@@ -155,6 +160,13 @@ class GaussianModel:
                                                     lr_final=training_args.position_lr_final*self.spatial_lr_scale,
                                                     lr_delay_mult=training_args.position_lr_delay_mult,
                                                     max_steps=training_args.position_lr_max_steps)
+        
+        for c in centers:
+            c_tensor = torch.tensor(np.asarray(c)).float().cuda()
+            self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
+            lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
+            self.center_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
+            
 
     def update_learning_rate(self, iteration):
         ''' Learning rate scheduling per step '''
@@ -163,6 +175,13 @@ class GaussianModel:
                 lr = self.xyz_scheduler_args(iteration)
                 param_group['lr'] = lr
                 return lr
+            
+        for opt in self.center_optimizers:
+            for param_group in opt.param_groups:
+                if param_group["name"] == "center":
+                    lr = self.xyz_scheduler_args(iteration)
+                    param_group['lr'] = lr
+                    return lr
 
     def construct_list_of_attributes(self):
         l = ['x', 'y', 'z', 'nx', 'ny', 'nz']
@@ -178,10 +197,13 @@ class GaussianModel:
             l.append('rot_{}'.format(i))
         return l
 
-    def save_ply(self, path):
+    def save_ply(self, path, center=None):
         mkdir_p(os.path.dirname(path))
 
-        xyz = self._xyz.detach().cpu().numpy()
+        if center is None:
+            xyz = self._xyz.detach().cpu().numpy()
+        else:
+            xyz = (self._xyz + center).detach().cpu().numpy()
         normals = np.zeros_like(xyz)
         f_dc = self._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
         f_rest = self._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()

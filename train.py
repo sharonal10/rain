@@ -6,6 +6,7 @@ from utils.loss_utils import l1_loss, ssim
 from gaussian_renderer import render, network_gui, render_multi
 import sys
 from scene import Scene, GaussianModel
+from scene.dataset_readers import read_box
 from utils.general_utils import safe_state
 import uuid
 import numpy as np
@@ -34,13 +35,29 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     else:
         divide_ratio = 0.8
     print(f"Set divide_ratio to {divide_ratio}")
+
+    # gather centers (hardcoded for now)
+    # reference center is bottom drawer. coordinates for each center is the offset between each drawer and the bottom drawer
+    # render_multi assumes that we at least want to render it once without applying an offset
+    boxes_to_load = [1, 2, 3, 4]
+    raw_centers = []
+    for box_id in boxes_to_load:
+        box_path = os.path.join(dataset.source_path, f"sparse/0/{args_dict['box_name']}_{box_id:03}.txt")
+        print(f'loading box (center only) from {box_path}')
+        box_center, box_rotation, box_size, num_points = read_box(box_path)
+        raw_centers.append(box_center)
+
+    processed_centers = []
+    for i in range(3):
+        processed_centers.append(raw_centers[i] - raw_centers[-1])
+
     
     gaussians_list = []
     scene_list = []
-    for mask_id in range(args_dict['num_masks']):
+    for mask_id in [0, 4]: # dresser body + bottom drawer
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id)
-        gaussians.training_setup(opt) 
+        gaussians.training_setup(opt, processed_centers) 
         gaussians_list.append(gaussians)
         scene_list.append(scene)
     
@@ -67,6 +84,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
     for iteration in range(first_iter, opt.iterations + 1):
         if not viewpoint_stack:
+            random.shuffle(scene_order)
             viewpoint_stack = scene_order.copy()
         viewpoint_idx = viewpoint_stack.pop()
         for sub_iter in range(len(gaussians_list)):
@@ -133,10 +151,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
             gt_image = viewpoint_cam.original_image.cuda()
             mask = viewpoint_cam.mask.cuda()
-            if args.bg:
-                masked_image = image
-            else:
-                masked_image = image*mask
+            masked_image = image
+            # masked_image = image*mask
             masked_gt_image = gt_image*mask
             
             Ll1 = l1_loss(masked_image, masked_gt_image)
@@ -149,9 +165,13 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
                 if iteration % 10 == 0:
                     progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}", "num_gaussians" : f"{gaussians.get_xyz.shape[0]}"})
-                    progress_bar.update(10/args_dict['num_masks'])
+                    progress_bar.update(5)
                 if iteration == opt.iterations:
                     progress_bar.close()
+
+                if iteration < opt.iterations:
+                    gaussians.optimizer.step()
+                    gaussians.optimizer.zero_grad(set_to_none = True)
                 
                 training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
@@ -172,18 +192,28 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                         gaussians.reset_opacity()
 
         # also backprop for all, assuming bg, pipe etc are the same
+        # ablation: should the whole object rendering affect gaussians?
+        # or just the offset?
+        if args['whole_for_offset_only']:
+            for gaussians in gaussians_list:
+                for param_group in gaussians_list.optimizer.param_groups:
+                    for param in param_group['params']:
+                        param.requires_grad = False
+
         render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass)
         image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
+
+        if iteration % 1000 == 0 or iteration < 4:
+            to_save_image = Image.fromarray((image.detach().cpu().numpy() * 255).astype(np.uint8))
+            to_save_image.save(os.path.join(scene.model_path, f'whole_{iteration}.png'))
 
         gt_image = viewpoint_cam.original_image.cuda()
 
         mask = Image.open(os.path.join(dataset.source_path, 'full_masks', f'{viewpoint_cam.image_name}.png'))
         mask = PILtoTorch(mask, (viewpoint_cam.image_width, viewpoint_cam.image_height)).cuda()
         
-        if args.bg:
-            masked_image = image
-        else:
-            masked_image = image*mask
+        masked_image = image
+        # masked_image = image*mask
         masked_gt_image = gt_image*mask
 
         # assert False
@@ -202,10 +232,20 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 if iteration < opt.iterations:
                     gaussians.optimizer.step()
                     gaussians.optimizer.zero_grad(set_to_none = True)
+                    for c_opt in gaussians.center_optimizers:
+                        c_opt.step()
+                        c_opt.zero_grad(set_to_none = True)
 
                 if (iteration in checkpoint_iterations):
                     print("\n[ITER {}] Saving Checkpoint".format(iteration))
                     torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
+
+        
+        if args['whole_for_offset_only']:
+            for gaussians in gaussians_list:
+                for param_group in gaussians_list.optimizer.param_groups:
+                    for param in param_group['params']:
+                        param.requires_grad = True
 
         
 
@@ -346,10 +386,10 @@ if __name__ == "__main__":
     parser.add_argument("--box_gen", action="store_true", help="Use box_gen initialisation")
     parser.add_argument("--box_name", type=str, help="name of the .txt file with box params")
     parser.add_argument("--use_orig", action="store_true", help="Use box_gen initialisation")
-    parser.add_argument('--num_masks', type=int, required=True)
+    # removed for now, will hardcode
+    # parser.add_argument('--num_masks', type=int, required=True)
 
-
-    parser.add_argument("--bg", action="store_true", help="Don't apply mask to rendered image")
+    parser.add_argument("--whole_for_offset_only", action="store_true", help="During Whole Object Loss, only affect the offsets instead of the gaussians")
     
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
