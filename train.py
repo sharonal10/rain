@@ -167,6 +167,10 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.update(10/args_dict['num_masks'])
                 if iteration == opt.iterations:
                     progress_bar.close()
+
+                if iteration < opt.iterations:
+                    gaussians.optimizer.step()
+                    gaussians.optimizer.zero_grad(set_to_none = True)
                 
                 training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
