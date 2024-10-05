@@ -204,7 +204,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         image = render_pkg["render"]
 
         if iteration % 1000 == 0 or iteration < 4:
-            to_save_image = Image.fromarray((image.detach().cpu().numpy() * 255).astype(np.uint8))
+            to_save_image = Image.fromarray((np.squeeze(image.detach().cpu().numpy()) * 255).astype(np.uint8))
+            print(to_save_image.shape)
             to_save_image.save(os.path.join(scene.model_path, f'whole_{iteration}.png'))
 
         gt_image = viewpoint_cam.original_image.cuda()
