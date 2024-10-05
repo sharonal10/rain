@@ -82,8 +82,8 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     xyz = []
     for pc in gaussians_list:
         xyz.append(pc.get_xyz)
-        for center in pc.centers:
-            xyz.append(pc.get_xyz + center)
+        # for center in pc.centers:
+        #     xyz.append(pc.get_xyz + center)
     xyz = torch.cat(xyz, dim=0)
     screenspace_points = torch.zeros_like(xyz, dtype=xyz.dtype, requires_grad=True, device="cuda") + 0
     try:
