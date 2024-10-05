@@ -329,3 +329,19 @@ for la in "${lambda[@]}"; do
         done
     done
 done
+
+# duplication of drawer
+# removed bg
+# removed mask numbers, hardcoded
+# ablation where we allow whole object loss to affect gaussians or just offsets
+# offset loss is linked to xyz loss
+# possible followup ablations: 
+## apply to both gaussians and offsets, then later offsets only
+
+python -m tu.sbatch.sbatch_sweep --time 24:00:00 \
+    --proj_dir /viscam/projects/image2Blender/RAIN-GS --conda_env rain \
+    --job "10_04-duplicate_drawers_offset_only" --command "python train.py -s sugar/imgs/dresser_5_masks_with_full/ --exp_name 10_04-duplicate_drawers_offset_only --eval --box_gen --box_name box --ours_new --num_cams 10 --save_iterations 0 1000 3500 7000 --iterations 7000" --partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 64G
+
+python -m tu.sbatch.sbatch_sweep --time 24:00:00 \
+    --proj_dir /viscam/projects/image2Blender/RAIN-GS --conda_env rain \
+    --job "10_04-duplicate_drawers_offset_and_gaussian" --command "python train.py -s sugar/imgs/dresser_5_masks_with_full/ --exp_name 10_04-duplicate_drawers_offset_and_gaussian --eval --box_gen --box_name box --ours_new --num_cams 10 --save_iterations 0 1000 3500 7000 --iterations 7000" --partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 64G
