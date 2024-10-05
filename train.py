@@ -57,7 +57,10 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     for mask_id in [0, 4]: # dresser body + bottom drawer
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id)
-        gaussians.training_setup(opt, processed_centers) 
+        if mask_id == 0:
+            gaussians.training_setup(opt, []) 
+        else:
+            gaussians.training_setup(opt, processed_centers) 
         gaussians_list.append(gaussians)
         scene_list.append(scene)
     
