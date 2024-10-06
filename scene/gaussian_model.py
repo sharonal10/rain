@@ -123,8 +123,6 @@ class GaussianModel:
         fused_point_cloud = torch.tensor(np.asarray(pcd.points)).float().cuda()
         fused_color = RGB2SH(torch.tensor(np.asarray(pcd.colors)).float().cuda())
         features = torch.zeros((fused_color.shape[0], 3, (self.max_sh_degree + 1) ** 2)).float().cuda()
-        print(fused_color)
-        print(RGB2SH(0.0))
         features[:, :3, 0 ] = fused_color
         features[:, 3:, 1:] = 0.0
 
@@ -443,6 +441,5 @@ class GaussianModel:
         torch.cuda.empty_cache()
 
     def add_densification_stats(self, viewspace_point_tensor, update_filter):
-        print(3, viewspace_point_tensor.grad)
         self.xyz_gradient_accum[update_filter] += torch.norm(viewspace_point_tensor.grad[update_filter,:2], dim=-1, keepdim=True)
         self.denom[update_filter] += 1

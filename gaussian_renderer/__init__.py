@@ -103,8 +103,6 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     xyz = torch.cat(xyz, dim=0)
     screenspace_points = torch.zeros_like(xyz, dtype=xyz.dtype, requires_grad=True, device="cuda") + 0
     screenspace_points.retain_grad()
-    # screenspace_points.grad = torch.zeros_like(screenspace_points)
-    print(0, screenspace_points.grad)
 
     
     tanfovx = math.tan(viewpoint_camera.FoVx * 0.5)
@@ -179,7 +177,6 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
             else:
                 black = torch.zeros_like(pc.get_features)
                 black[:, 0] = RGB2SH(0.0)
-                print(black)
                 feats.append(black)
             for curr_id, center in enumerate(pc.centers):
                 if gaussian_id == None or (gaussian_id == pc.id and center_id==curr_id):
@@ -211,14 +208,10 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
         cov3D_precomp = cov3D_precomp)
     
     if append_range:
-        print(screenspace_points.shape)
-        print(append_range)
         screenspace_points = screenspace_points[append_range[0]:append_range[1]]
         screenspace_points.retain_grad()
         if screenspace_points.grad is None:
             screenspace_points.grad = torch.zeros_like(screenspace_points)
-        print(screenspace_points.shape)
-        print(1, screenspace_points.grad)
         radii = radii[append_range[0]:append_range[1]]
 
     return {"render": rendered_image,
