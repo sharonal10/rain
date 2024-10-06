@@ -102,10 +102,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
             current_index += pc.get_xyz.shape[0]
     xyz = torch.cat(xyz, dim=0)
     screenspace_points = torch.zeros_like(xyz, dtype=xyz.dtype, requires_grad=True, device="cuda") + 0
-    try:
-        screenspace_points.retain_grad()
-    except:
-        pass
+    screenspace_points.retain_grad()
 
     
     tanfovx = math.tan(viewpoint_camera.FoVx * 0.5)
@@ -199,10 +196,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     
     if append_range:
         screenspace_points = screenspace_points[append_range[0]:append_range[1]]
-        try:
-            screenspace_points.retain_grad()
-        except:
-            pass
+        screenspace_points.retain_grad()
         radii = radii[append_range[0]:append_range[1]]
 
     return {"render": rendered_image,
