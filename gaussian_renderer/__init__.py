@@ -174,6 +174,8 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     if override_color is None:
         feats = []
         for pc in gaussians_list:
+            assert torch.all(pc.get_features == pc.get_features[:, 0:1])
+            print(pc.get_features[:, 0])
             if True: #gaussian_id == None or (gaussian_id == pc.id and center_id==None):
                 feats.append(pc.get_features)
             else:
