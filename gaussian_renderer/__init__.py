@@ -178,7 +178,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
                 feats.append(pc.get_features)
             else:
                 black = torch.zeros_like(pc.get_features)
-                black[0] = RGB2SH(0.0)
+                black[:, 0] = RGB2SH(0.0)
                 print(black)
                 feats.append(black)
             for curr_id, center in enumerate(pc.centers):
@@ -186,7 +186,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
                     feats.append(pc.get_features)
                 else:
                     black = torch.zeros_like(pc.get_features)
-                    black[0] = RGB2SH(0.0)
+                    black[:, 0] = RGB2SH(0.0)
                     feats.append(black)
         if pipe.convert_SHs_python:
             assert False
