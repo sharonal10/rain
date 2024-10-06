@@ -103,7 +103,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     xyz = torch.cat(xyz, dim=0)
     screenspace_points = torch.zeros_like(xyz, dtype=xyz.dtype, requires_grad=True, device="cuda") + 0
     screenspace_points.retain_grad()
-    screenspace_points.grad = torch.zeros_like(screenspace_points)
+    # screenspace_points.grad = torch.zeros_like(screenspace_points)
     print(0, screenspace_points.grad)
 
     
@@ -166,14 +166,14 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
                 feats.append(pc.get_features)
             else:
                 black = torch.zeros_like(pc.get_features)
-                black[:, :3, 0 ] = RGB2SH(0.0)
+                # black[:, :3, 0 ] = RGB2SH(0.0)
                 feats.append(black)
             for curr_id, center in enumerate(pc.centers):
                 if gaussian_id == None or (gaussian_id == pc.id and center_id==curr_id):
                     feats.append(pc.get_features)
                 else:
                     black = torch.zeros_like(pc.get_features)
-                    black[:, :3, 0 ] = RGB2SH(0.0)
+                    # black[:, :3, 0 ] = RGB2SH(0.0)
                     feats.append(black)
         if pipe.convert_SHs_python:
             shs_view = torch.cat(feats, dim=0).transpose(1, 2).view(-1, 3, (gaussians_list[0].max_sh_degree+1)**2)
@@ -201,8 +201,8 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
         print(append_range)
         screenspace_points = screenspace_points[append_range[0]:append_range[1]]
         screenspace_points.retain_grad()
-        if screenspace_points.grad is None:
-            screenspace_points.grad = torch.zeros_like(screenspace_points)
+        # if screenspace_points.grad is None:
+        #     screenspace_points.grad = torch.zeros_like(screenspace_points)
         print(screenspace_points.shape)
         print(1, screenspace_points.grad)
         radii = radii[append_range[0]:append_range[1]]
