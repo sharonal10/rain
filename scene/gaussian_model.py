@@ -144,8 +144,6 @@ class GaussianModel:
         self._rotation = nn.Parameter(rots.requires_grad_(True))
         self._opacity = nn.Parameter(opacities.requires_grad_(True))
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
-        print(self.get_features)
-        assert False
 
     def training_setup(self, training_args, centers):
         self.percent_dense = training_args.percent_dense

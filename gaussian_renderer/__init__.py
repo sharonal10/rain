@@ -174,14 +174,15 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     if override_color is None:
         feats = []
         for pc in gaussians_list:
-            if True: #gaussian_id == None or (gaussian_id == pc.id and center_id==None):
+            if gaussian_id == None or (gaussian_id == pc.id and center_id==None):
                 feats.append(pc.get_features)
             else:
                 black = torch.zeros_like(pc.get_features)
                 black[:, :3, 0 ] = RGB2SH(0.0)
+                print(black)
                 feats.append(black)
             for curr_id, center in enumerate(pc.centers):
-                if True: #gaussian_id == None or (gaussian_id == pc.id and center_id==curr_id):
+                if gaussian_id == None or (gaussian_id == pc.id and center_id==curr_id):
                     feats.append(pc.get_features)
                 else:
                     black = torch.zeros_like(pc.get_features)
