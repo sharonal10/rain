@@ -130,10 +130,22 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     means3D = xyz
     means2D = screenspace_points
     opacity = []
+    # for pc in gaussians_list:
+    #     opacity.append(pc.get_opacity)
+    #     for center in pc.centers:
+    #         opacity.append(pc.get_opacity)
     for pc in gaussians_list:
-        opacity.append(pc.get_opacity)
-        for center in pc.centers:
+        if gaussian_id == None or (gaussian_id == pc.id and center_id==None):
             opacity.append(pc.get_opacity)
+        else:
+            black = torch.ones_like(pc.get_opacity)
+            opacity.append(black)
+        for curr_id, center in enumerate(pc.centers):
+            if gaussian_id == None or (gaussian_id == pc.id and center_id==curr_id):
+                opacity.append(pc.get_opacity)
+            else:
+                black = torch.ones_like(pc.get_opacity)
+                opacity.append(black)
     opacity = torch.cat(opacity, dim=0)
 
     scales = None
