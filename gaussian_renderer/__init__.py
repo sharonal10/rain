@@ -176,6 +176,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
                     # black[:, :3, 0 ] = RGB2SH(0.0)
                     feats.append(black)
         if pipe.convert_SHs_python:
+            assert False
             shs_view = torch.cat(feats, dim=0).transpose(1, 2).view(-1, 3, (gaussians_list[0].max_sh_degree+1)**2)
             dir_pp = (xyz - viewpoint_camera.camera_center.repeat(torch.cat(feats, dim=0).shape[0], 1))
             dir_pp_normalized = dir_pp/dir_pp.norm(dim=1, keepdim=True)
