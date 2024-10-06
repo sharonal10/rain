@@ -163,19 +163,19 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     if override_color is None:
         feats = []
         for pc in gaussians_list:
-            if pc.id == gaussian_id and center_id==None:
+            if pc.id == None or (pc.id == gaussian_id and center_id==None):
+                feats.append(pc.get_features)
+            else:
                 black = torch.zeros_like(pc.get_features)
                 black[:, :3, 0 ] = RGB2SH(0.0)
                 feats.append(black)
-            else:
-                feats.append(pc.get_features)
             for curr_id, center in enumerate(pc.centers):
-                if pc.id == gaussian_id and center_id==curr_id:
+                if pc.id == None or (pc.id == gaussian_id and center_id==curr_id):
+                    feats.append(pc.get_features)
+                else:
                     black = torch.zeros_like(pc.get_features)
                     black[:, :3, 0 ] = RGB2SH(0.0)
                     feats.append(black)
-                else:
-                    feats.append(pc.get_features)
         if pipe.convert_SHs_python:
             shs_view = torch.cat(feats, dim=0).transpose(1, 2).view(-1, 3, (gaussians_list[0].max_sh_degree+1)**2)
             dir_pp = (xyz - viewpoint_camera.camera_center.repeat(torch.cat(feats, dim=0).shape[0], 1))
