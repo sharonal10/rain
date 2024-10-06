@@ -154,6 +154,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass, gaussian_id=gaussians.id, center_id=center_id)
                 image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
                 print(2, viewspace_point_tensor.grad)
+                print(2, viewspace_point_tensor)
 
                 if iteration % 1000 == 0 or iteration < 4:
                     to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
@@ -191,6 +192,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
                     if iteration < opt.densify_until_iter:       
                         gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
+                        print(2.5, viewspace_point_tensor.grad)
+                        print(2.5, viewspace_point_tensor)
                         gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
 
                         if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
