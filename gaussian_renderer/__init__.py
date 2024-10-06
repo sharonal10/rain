@@ -196,9 +196,11 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
         cov3D_precomp = cov3D_precomp)
     
     if append_range:
+        print(screenspace_points.shape)
         print(append_range)
         screenspace_points = screenspace_points[append_range[0]:append_range[1]]
         screenspace_points.retain_grad()
+        print(screenspace_points.shape)
         print(1, screenspace_points.grad)
         radii = radii[append_range[0]:append_range[1]]
 
