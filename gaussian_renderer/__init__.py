@@ -86,10 +86,20 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     else, an offset version is normal.
     '''
     xyz = []
+    append_range = []
+    current_index = 0
     for pc in gaussians_list:
         xyz.append(pc.get_xyz)
-        for center in pc.centers:
+        if pc.id == gaussian_id and center_id==None:
+            assert append_range == [], append_range
+            append_range = [current_index, current_index + pc.get_xyz.shape[0]]
+        current_index += pc.get_xyz.shape[0]
+        for curr_id, center in enumerate(pc.centers):
             xyz.append(pc.get_xyz + center)
+            if pc.id == gaussian_id and center_id==curr_id:
+                assert append_range == [], append_range
+                append_range = [current_index, current_index + pc.get_xyz.shape[0]]
+            current_index += pc.get_xyz.shape[0]
     xyz = torch.cat(xyz, dim=0)
     screenspace_points = torch.zeros_like(xyz, dtype=xyz.dtype, requires_grad=True, device="cuda") + 0
     try:
@@ -186,6 +196,10 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
         scales = scales,
         rotations = rotations,
         cov3D_precomp = cov3D_precomp)
+    
+    if append_range:
+        screenspace_points = screenspace_points[append_range[0]:append_range[1]]
+        radii = radii[append_range[0]:append_range[1]]
 
     return {"render": rendered_image,
             "viewspace_points": screenspace_points,
