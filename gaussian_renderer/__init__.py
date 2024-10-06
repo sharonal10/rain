@@ -199,6 +199,10 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     
     if append_range:
         screenspace_points = screenspace_points[append_range[0]:append_range[1]]
+        try:
+            screenspace_points.retain_grad()
+        except:
+            pass
         radii = radii[append_range[0]:append_range[1]]
 
     return {"render": rendered_image,
