@@ -30,7 +30,7 @@ class GaussianModel:
         self.rotation_activation = torch.nn.functional.normalize
 
 
-    def __init__(self, sh_degree : int, divide_ratio : float):
+    def __init__(self, sh_degree : int, divide_ratio : float, mask_id):
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree  
         self._xyz = torch.empty(0)
@@ -50,6 +50,8 @@ class GaussianModel:
 
         self.centers = [] # represents the offset applied to create other instances
         self.center_optimizers = []
+
+        self.id = mask_id
 
     def capture(self):
         # TODO: add center-related params

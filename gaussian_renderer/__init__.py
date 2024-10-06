@@ -4,7 +4,7 @@ import sys
 sys.path.append('..')
 from submodules.diff_gaussian_rasterization.diff_gaussian_rasterization import GaussianRasterizationSettings, GaussianRasterizer
 from scene.gaussian_model import GaussianModel
-from utils.sh_utils import eval_sh
+from utils.sh_utils import eval_sh, RGB2SH
 
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, low_pass = 0.3):    
     screenspace_points = torch.zeros_like(pc.get_xyz, dtype=pc.get_xyz.dtype, requires_grad=True, device="cuda") + 0
@@ -78,7 +78,13 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             "radii": radii,
             "depth": depth}
 
-def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, low_pass = 0.3):
+def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, low_pass = 0.3, gaussian_id=None, offset_id=None):
+    '''
+    if gaussian_id=None, render everything normally.
+    else, one item will be normal, all else is black.
+    offset_id=None means the original item is normal.
+    else, an offset version is normal.
+    '''
     xyz = []
     for pc in gaussians_list:
         xyz.append(pc.get_xyz)
@@ -147,9 +153,19 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     if override_color is None:
         feats = []
         for pc in gaussians_list:
-            feats.append(pc.get_features)
-            for center in pc.centers:
+            if pc.id == gaussian_id and offset_id==None:
+                black = torch.zeros_like(pc.get_features)
+                black[:, :3, 0 ] = RGB2SH(0.0)
+                feats.append(black)
+            else:
                 feats.append(pc.get_features)
+            for curr_id, center in enumerate(pc.centers):
+                if pc.id == gaussian_id and offset_id==curr_id:
+                    black = torch.zeros_like(pc.get_features)
+                    black[:, :3, 0 ] = RGB2SH(0.0)
+                    feats.append(black)
+                else:
+                    feats.append(pc.get_features)
         if pipe.convert_SHs_python:
             shs_view = torch.cat(feats, dim=0).transpose(1, 2).view(-1, 3, (gaussians_list[0].max_sh_degree+1)**2)
             dir_pp = (xyz - viewpoint_camera.camera_center.repeat(torch.cat(feats, dim=0).shape[0], 1))
