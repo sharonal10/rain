@@ -78,11 +78,11 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             "radii": radii,
             "depth": depth}
 
-def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, low_pass = 0.3, gaussian_id=None, offset_id=None):
+def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, low_pass = 0.3, gaussian_id=None, center_id=None):
     '''
     if gaussian_id=None, render everything normally.
     else, one item will be normal, all else is black.
-    offset_id=None means the original item is normal.
+    center_id=None means the original item is normal.
     else, an offset version is normal.
     '''
     xyz = []
@@ -153,14 +153,14 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     if override_color is None:
         feats = []
         for pc in gaussians_list:
-            if pc.id == gaussian_id and offset_id==None:
+            if pc.id == gaussian_id and center_id==None:
                 black = torch.zeros_like(pc.get_features)
                 black[:, :3, 0 ] = RGB2SH(0.0)
                 feats.append(black)
             else:
                 feats.append(pc.get_features)
             for curr_id, center in enumerate(pc.centers):
-                if pc.id == gaussian_id and offset_id==curr_id:
+                if pc.id == gaussian_id and center_id==curr_id:
                     black = torch.zeros_like(pc.get_features)
                     black[:, :3, 0 ] = RGB2SH(0.0)
                     feats.append(black)
@@ -187,4 +187,8 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
         rotations = rotations,
         cov3D_precomp = cov3D_precomp)
 
-    return {"render": rendered_image}
+    return {"render": rendered_image,
+            "viewspace_points": screenspace_points,
+            "visibility_filter" : radii > 0,
+            "radii": radii,
+            "depth": depth}
