@@ -30,7 +30,7 @@ class GaussianModel:
         self.rotation_activation = torch.nn.functional.normalize
 
 
-    def __init__(self, sh_degree : int, divide_ratio : float):
+    def __init__(self, sh_degree : int, divide_ratio : float, scale=1.0):
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree  
         self._xyz = torch.empty(0)
@@ -49,7 +49,8 @@ class GaussianModel:
         self.divide_ratio = divide_ratio
 
         self.centers = [] # represents the offset applied to create other instances
-        self.center_optimizers = []
+        self.scale = scale # they should still all be the same scale
+        self.center_and_scale_optimizers = []
 
     def capture(self):
         # TODO: add center-related params
@@ -89,7 +90,7 @@ class GaussianModel:
 
     @property
     def get_scaling(self):
-        return self.scaling_activation(self._scaling)
+        return self.scaling_activation(self._scaling) * self.scale
     
     @property
     def get_rotation(self):
@@ -165,7 +166,7 @@ class GaussianModel:
             c_tensor = torch.tensor(np.asarray(c)).float().cuda()
             self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
             lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
-            self.center_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
+            self.center_and_scale_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
             
 
     def update_learning_rate(self, iteration):
@@ -176,7 +177,7 @@ class GaussianModel:
                 param_group['lr'] = lr
                 return lr
             
-        for opt in self.center_optimizers:
+        for opt in self.center_and_scale_optimizers:
             for param_group in opt.param_groups:
                 if param_group["name"] == "center":
                     lr = self.xyz_scheduler_args(iteration)
