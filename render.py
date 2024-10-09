@@ -45,7 +45,7 @@ def create_video(image_files, output_video, fps=10):
     video.release()
 
 
-def render_set(model_path, name, iteration, views, gaussians, pipeline, background, render_source):
+def render_set(model_path, name, iteration, views, gaussians, pipeline, background, render_source, prefix):
     # render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
     render_path = os.path.join(model_path, f"to_delete_{render_source}_{iteration}")
     # gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
@@ -77,8 +77,8 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     depth_files = get_image_files(render_path, f"_depth_inferno_{render_source}_{iteration}")
     
     fps = 10
-    create_video(rgb_files, f"videos/{os.path.basename(model_path)}_{render_source}_{iteration}_rgb.mp4")
-    create_video(depth_files, f"videos/{os.path.basename(model_path)}_{render_source}_{iteration}_depth.mp4")
+    create_video(rgb_files, f"videos/{prefix+'_' if prefix else ''}{os.path.basename(model_path)}_{render_source}_{iteration}_rgb.mp4")
+    create_video(depth_files, f"videos/{prefix+'_' if prefix else ''}{os.path.basename(model_path)}_{render_source}_{iteration}_depth.mp4")
 
     shutil.rmtree(render_path)
 
@@ -99,10 +99,10 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
         if not skip_train:
-             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, args_dict['render_source'])
+             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, args_dict['render_source'], args_dict['prefix'])
 
         if not skip_test:
-             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, args_dict['render_source'])
+             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, args_dict['render_source'], args_dict['prefix'])
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Testing script parameters")
@@ -116,6 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--ours_new", action="store_true", help="Use our initialisation version 2")
     parser.add_argument("--ours", action="store_true", help="Use our initialisation version 2")
     parser.add_argument("--render_source", default="point_cloud")
+    parser.add_argument("--prefix", default="", help="prefix when saving video")
     parser.add_argument("--scale", default=1, type=float, help="test scaling")
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
