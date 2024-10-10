@@ -61,8 +61,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     gaussians_list = []
     scene_list = []
     assembly_sources = { # hardcode for this experiment
-        0: os.path.join('10_10-phase_1_dresser', 'point_cloud_0', 'iteration_7000', 'point_cloud.ply'),
-        4: os.path.join('10_10-phase_1_drawer', 'point_cloud_0', 'iteration_7000', 'point_cloud.ply'),
+        0: os.path.join('output', '10_10-phase_1_dresser', 'point_cloud_0', 'iteration_7000', 'point_cloud.ply'),
+        4: os.path.join('output', '10_10-phase_1_drawer', 'point_cloud_0', 'iteration_7000', 'point_cloud.ply'),
     }
     for mask_id in [0, 4]: # dresser body + bottom drawer
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
