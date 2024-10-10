@@ -55,7 +55,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         processed_centers.append(raw_centers[i] - raw_centers[-1])
     # choose the bottom drawer to be the 'zero' - but still need to center the
     # loaded gaussians to the bottom drawer's position
-    zero_center = raw_centers[-1]
+    zero_center = torch.tensor(raw_centers[-1], dtype=torch.float, device="cuda")
 
     
     gaussians_list = []
