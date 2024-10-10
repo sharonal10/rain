@@ -175,6 +175,7 @@ class GaussianModel:
                                                         lr_delay_mult=training_args.position_lr_delay_mult,
                                                         max_steps=training_args.position_lr_max_steps)
         else:
+            self.scale = torch.tensor(self.scale).float().cuda()
             l = [
                 {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
             ]
