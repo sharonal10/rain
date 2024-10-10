@@ -131,12 +131,14 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             render_pkg = render(viewpoint_cam, gaussians, pipe, bg, low_pass = low_pass)
             image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
 
+            if iteration % 1000 == 0 or iteration < 4:
+                to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
+                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                to_save_image.save(os.path.join(scene.model_path, f'part_{gaussians.id}_{iteration}.png'))
+
             gt_image = viewpoint_cam.original_image.cuda()
             mask = viewpoint_cam.mask.cuda()
-            if args.bg:
-                masked_image = image
-            else:
-                masked_image = image*mask
+            masked_image = image
             masked_gt_image = gt_image*mask
             
             Ll1 = l1_loss(masked_image, masked_gt_image)
@@ -173,17 +175,19 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
         # also backprop for all, assuming bg, pipe etc are the same
         render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass)
-        image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
+        image = render_pkg["render"]
+
+        
+        if iteration % 1000 == 0 or iteration < 4:
+            to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
+            to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+            to_save_image.save(os.path.join(scene.model_path, f'whole_{iteration}.png'))
 
         gt_image = viewpoint_cam.original_image.cuda()
 
         mask = Image.open(os.path.join(dataset.source_path, 'full_masks', f'{viewpoint_cam.image_name}.png'))
         mask = PILtoTorch(mask, (viewpoint_cam.image_width, viewpoint_cam.image_height)).cuda()
-        
-        if args.bg:
-            masked_image = image
-        else:
-            masked_image = image*mask
+        masked_image = image
         masked_gt_image = gt_image*mask
 
         # assert False
@@ -347,9 +351,6 @@ if __name__ == "__main__":
     parser.add_argument("--box_name", type=str, help="name of the .txt file with box params")
     parser.add_argument("--use_orig", action="store_true", help="Use box_gen initialisation")
     parser.add_argument('--num_masks', type=int, required=True)
-
-
-    parser.add_argument("--bg", action="store_true", help="Don't apply mask to rendered image")
     
     args = parser.parse_args(sys.argv[1:])
     args.save_iterations.append(args.iterations)
