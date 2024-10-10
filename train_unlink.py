@@ -45,8 +45,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         4: os.path.join('output', '10_10-phase_2_assembly', 'point_cloud_4', 'iteration_1', 'point_cloud.ply'),
     }
     for mask_id in range(args_dict['num_masks']):
-        gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly_source=assembly_sources[mask_id])
-        scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id)
+        gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id)
+        scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id])
         gaussians.training_setup(opt) 
         gaussians_list.append(gaussians)
         scene_list.append(scene)
