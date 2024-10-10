@@ -160,7 +160,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 low_pass = 0.3
                 
             for center_id in [None] + list(range(len(gaussians.centers))):
-                print('currently', gaussians.id, center_id)
+                # print('currently', gaussians.id, center_id)
                 render_pkg = render(viewpoint_cam, gaussians, pipe, bg, low_pass = low_pass, center_id=center_id)
                 image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
 
@@ -177,9 +177,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
                 if iteration < opt.densify_until_iter:       
                     gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
-
-                    if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
-                        gaussians.reset_opacity()
 
         # also backprop for all, assuming bg, pipe etc are the same
 
