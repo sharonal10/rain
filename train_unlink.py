@@ -38,11 +38,11 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     gaussians_list = []
     scene_list = []
     assembly_sources = { # hardcode for this experiment
-        0: os.path.join('output', '10_10-phase_2_assembly', 'point_cloud_0', 'iteration_1', 'point_cloud.ply'),
-        1: os.path.join('output', '10_10-phase_2_assembly', 'point_cloud_4_0', 'iteration_1', 'point_cloud.ply'),
-        2: os.path.join('output', '10_10-phase_2_assembly', 'point_cloud_4_1', 'iteration_1', 'point_cloud.ply'),
-        3: os.path.join('output', '10_10-phase_2_assembly', 'point_cloud_4_2', 'iteration_1', 'point_cloud.ply'),
-        4: os.path.join('output', '10_10-phase_2_assembly', 'point_cloud_4', 'iteration_1', 'point_cloud.ply'),
+        0: os.path.join('output', '10_04-duplicate_drawers_offset_and_gaussian', 'point_cloud_0', 'iteration_7000', 'point_cloud.ply'),
+        1: os.path.join('output', '10_04-duplicate_drawers_offset_and_gaussian', 'point_cloud_4_0', 'iteration_7000', 'point_cloud.ply'),
+        2: os.path.join('output', '10_04-duplicate_drawers_offset_and_gaussian', 'point_cloud_4_1', 'iteration_7000', 'point_cloud.ply'),
+        3: os.path.join('output', '10_04-duplicate_drawers_offset_and_gaussian', 'point_cloud_4_2', 'iteration_7000', 'point_cloud.ply'),
+        4: os.path.join('output', '10_04-duplicate_drawers_offset_and_gaussian', 'point_cloud_4', 'iteration_7000', 'point_cloud.ply'),
     }
     for mask_id in range(args_dict['num_masks']):
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id)
