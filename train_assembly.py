@@ -222,6 +222,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     for c_opt in gaussians.center_optimizers:
                         c_opt.step()
                         c_opt.zero_grad(set_to_none = True)
+                    print('--')
+                    print(sub_iter)
+                    print('scale', gaussians.scale)
 
                 if (iteration in checkpoint_iterations):
                     print("\n[ITER {}] Saving Checkpoint".format(iteration))
