@@ -49,7 +49,7 @@ class GaussianModel:
         self.divide_ratio = divide_ratio
 
         self.centers = [] # represents the offset applied to create other instances
-        self.scale = scale # they should still all be the same scale
+        self.scale = torch.tensor(scale).float().cuda() # they should still all be the same scale
         self.center_optimizers = []
         self.scale_optimizer = None
 
@@ -95,7 +95,7 @@ class GaussianModel:
 
     @property
     def get_scaling(self):
-        return self.scaling_activation(self._scaling + torch.log(torch.as_tensor(self.scale, dtype=self._scaling.dtype, device=self._scaling.device)))
+        return self.scaling_activation(self._scaling + torch.log(self.scale))
     
     @property
     def get_rotation(self):
@@ -175,7 +175,7 @@ class GaussianModel:
                                                         lr_delay_mult=training_args.position_lr_delay_mult,
                                                         max_steps=training_args.position_lr_max_steps)
         else:
-            self.scale = torch.tensor(self.scale).float().cuda()
+            self.scale = nn.Parameter(self.scale.requires_grad_(True))
             l = [
                 {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
             ]
@@ -232,7 +232,7 @@ class GaussianModel:
         f_dc = self._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
         f_rest = self._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
         opacities = self._opacity.detach().cpu().numpy()
-        scale = (self._scaling + torch.log(torch.as_tensor(self.scale, dtype=self._scaling.dtype, device=self._scaling.device))).detach().cpu().numpy()
+        scale = (self._scaling + torch.log(self.scale)).detach().cpu().numpy()
         rotation = self._rotation.detach().cpu().numpy()
 
         dtype_full = [(attribute, 'f4') for attribute in self.construct_list_of_attributes()]

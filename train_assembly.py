@@ -245,7 +245,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 f_dc = gaussians_list[0]._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
                 f_rest = gaussians_list[0]._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
                 opacities = gaussians_list[0]._opacity.detach().cpu().numpy()
-                scale = (gaussians_list[0]._scaling + torch.log(torch.as_tensor(gaussians_list[0].scale, dtype=gaussians_list[0]._scaling.dtype, device=gaussians_list[0]._scaling.device))).detach().cpu().numpy()
+                scale = (gaussians_list[0]._scaling + torch.log(gaussians_list[0].scale)).detach().cpu().numpy()
                 rotation = gaussians_list[0]._rotation.detach().cpu().numpy()
 
                 for gaussians in gaussians_list[1:]:
@@ -257,7 +257,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     f_dc = np.concatenate((f_dc, gaussians._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
                     f_rest = np.concatenate((f_rest, gaussians._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
                     opacities = np.concatenate((opacities, gaussians._opacity.detach().cpu().numpy()), axis=0)
-                    scale = np.concatenate((scale, (gaussians._scaling + torch.log(torch.as_tensor(gaussians.scale, dtype=gaussians._scaling.dtype, device=gaussians._scaling.device))).detach().cpu().numpy()), axis=0)
+                    scale = np.concatenate((scale, (gaussians._scaling + torch.log(gaussians.scale)).detach().cpu().numpy()), axis=0)
                     rotation = np.concatenate((rotation, gaussians._rotation.detach().cpu().numpy()), axis=0)
 
                     for center in gaussians.centers:
@@ -269,7 +269,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                         f_dc = np.concatenate((f_dc, gaussians._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
                         f_rest = np.concatenate((f_rest, gaussians._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
                         opacities = np.concatenate((opacities, gaussians._opacity.detach().cpu().numpy()), axis=0)
-                        scale = np.concatenate((scale, (gaussians._scaling + torch.log(torch.as_tensor(gaussians.scale, dtype=gaussians._scaling.dtype, device=gaussians._scaling.device))).detach().cpu().numpy()), axis=0)
+                        scale = np.concatenate((scale, (gaussians._scaling + torch.log(gaussians.scale)).detach().cpu().numpy()), axis=0)
                         rotation = np.concatenate((rotation, gaussians._rotation.detach().cpu().numpy()), axis=0)
                 normals = np.zeros_like(xyz)
 
