@@ -11,7 +11,7 @@ class Scene:
 
     gaussians : GaussianModel
 
-    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, resolution_scales=[1.0], args_dict=None, mask_id=None, render_source=None):
+    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, resolution_scales=[1.0], args_dict=None, mask_id=None, render_source=None, zero_center=None, assembly_source=None):
         self.model_path = args.model_path
         self.loaded_iter = None
         self.gaussians = gaussians
@@ -68,6 +68,8 @@ class Scene:
                                                            render_source,
                                                            "iteration_" + str(self.loaded_iter),
                                                            "point_cloud.ply"))
+        elif assembly_source:
+            self.gaussians.load_ply(assembly_source, zero_center=zero_center)
         else:
             self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent)
 

@@ -188,11 +188,12 @@ class GaussianModel:
 
     def update_learning_rate(self, iteration):
         ''' Learning rate scheduling per step '''
-        for param_group in self.optimizer.param_groups:
-            if param_group["name"] == "xyz":
-                lr = self.xyz_scheduler_args(iteration)
-                param_group['lr'] = lr
-                return lr
+        if not self.assembly:
+            for param_group in self.optimizer.param_groups:
+                if param_group["name"] == "xyz":
+                    lr = self.xyz_scheduler_args(iteration)
+                    param_group['lr'] = lr
+                    return lr
             
         for opt in self.center_optimizers:
             for param_group in opt.param_groups:
@@ -246,7 +247,7 @@ class GaussianModel:
         optimizable_tensors = self.replace_tensor_to_optimizer(opacities_new, "opacity")
         self._opacity = optimizable_tensors["opacity"]
 
-    def load_ply(self, path):
+    def load_ply(self, path, zero_center=None):
         plydata = PlyData.read(path)
 
         xyz = np.stack((np.asarray(plydata.elements[0]["x"]),
@@ -280,6 +281,9 @@ class GaussianModel:
         for idx, attr_name in enumerate(rot_names):
             rots[:, idx] = np.asarray(plydata.elements[0][attr_name])
 
+        if zero_center is not None:
+            centroid = xyz.mean(dim=0)
+            xyz = xyz - centroid + zero_center
         if self.assembly:
             self._xyz = torch.tensor(xyz, dtype=torch.float, device="cuda")
             self._features_dc = torch.tensor(features_dc, dtype=torch.float, device="cuda").transpose(1, 2).contiguous()
