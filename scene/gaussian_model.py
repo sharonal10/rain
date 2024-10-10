@@ -93,7 +93,7 @@ class GaussianModel:
 
     @property
     def get_scaling(self):
-        return self.scaling_activation(self._scaling + torch.log(self.scale))
+        return self.scaling_activation(self._scaling + torch.log(torch.as_tensor(self.scale, dtype=self._scaling.dtype, device=self._scaling.device)))
     
     @property
     def get_rotation(self):
@@ -228,7 +228,7 @@ class GaussianModel:
         f_dc = self._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
         f_rest = self._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
         opacities = self._opacity.detach().cpu().numpy()
-        scale = (self._scaling + torch.log(self.scale)).detach().cpu().numpy()
+        scale = (self._scaling + torch.log(torch.as_tensor(self.scale, dtype=self._scaling.dtype, device=self._scaling.device))).detach().cpu().numpy()
         rotation = self._rotation.detach().cpu().numpy()
 
         dtype_full = [(attribute, 'f4') for attribute in self.construct_list_of_attributes()]
