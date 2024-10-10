@@ -30,7 +30,7 @@ class GaussianModel:
         self.rotation_activation = torch.nn.functional.normalize
 
 
-    def __init__(self, sh_degree : int, divide_ratio : float, scale=1.0):
+    def __init__(self, sh_degree : int, divide_ratio : float, scale=1.0, assembly=False):
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree  
         self._xyz = torch.empty(0)
@@ -50,7 +50,10 @@ class GaussianModel:
 
         self.centers = [] # represents the offset applied to create other instances
         self.scale = scale # they should still all be the same scale
-        self.center_and_scale_optimizers = []
+        self.center_optimizers = []
+        self.scale_optimizer = None
+
+        self.assembly = assembly # if true, enable optim for centers and scale, disable all else
 
     def capture(self):
         # TODO: add center-related params
@@ -90,7 +93,7 @@ class GaussianModel:
 
     @property
     def get_scaling(self):
-        return self.scaling_activation(self._scaling) * self.scale
+        return self.scaling_activation(self._scaling + torch.log(self.scale))
     
     @property
     def get_rotation(self):
@@ -134,39 +137,51 @@ class GaussianModel:
 
         opacities = inverse_sigmoid(0.1 * torch.ones((fused_point_cloud.shape[0], 1), dtype=torch.float, device="cuda"))
 
-        self._xyz = nn.Parameter(fused_point_cloud.requires_grad_(True))
-        self._features_dc = nn.Parameter(features[:,:,0:1].transpose(1, 2).contiguous().requires_grad_(True))
-        self._features_rest = nn.Parameter(features[:,:,1:].transpose(1, 2).contiguous().requires_grad_(True))
-        self._scaling = nn.Parameter(scales.requires_grad_(True)) 
-        self._rotation = nn.Parameter(rots.requires_grad_(True))
-        self._opacity = nn.Parameter(opacities.requires_grad_(True))
+        if self.assembly:
+            self._xyz = fused_point_cloud
+            self._features_dc = features[:,:,0:1].transpose(1, 2).contiguous()
+            self._features_rest = features[:,:,1:].transpose(1, 2).contiguous()
+            self._scaling = scales 
+            self._rotation = rots
+            self._opacity = opacities
+        else:
+            self._xyz = nn.Parameter(fused_point_cloud.requires_grad_(True))
+            self._features_dc = nn.Parameter(features[:,:,0:1].transpose(1, 2).contiguous().requires_grad_(True))
+            self._features_rest = nn.Parameter(features[:,:,1:].transpose(1, 2).contiguous().requires_grad_(True))
+            self._scaling = nn.Parameter(scales.requires_grad_(True)) 
+            self._rotation = nn.Parameter(rots.requires_grad_(True))
+            self._opacity = nn.Parameter(opacities.requires_grad_(True))
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
 
     def training_setup(self, training_args, centers):
         self.percent_dense = training_args.percent_dense
         self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
+        if not self.assembly:
+            l = [
+                {'params': [self._xyz], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "xyz"},
+                {'params': [self._features_dc], 'lr': training_args.feature_lr, "name": "f_dc"},
+                {'params': [self._features_rest], 'lr': training_args.feature_lr / 20.0, "name": "f_rest"},
+                {'params': [self._opacity], 'lr': training_args.opacity_lr, "name": "opacity"},
+                {'params': [self._scaling], 'lr': training_args.scaling_lr, "name": "scaling"},
+                {'params': [self._rotation], 'lr': training_args.rotation_lr, "name": "rotation"}
+            ]
 
-        l = [
-            {'params': [self._xyz], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "xyz"},
-            {'params': [self._features_dc], 'lr': training_args.feature_lr, "name": "f_dc"},
-            {'params': [self._features_rest], 'lr': training_args.feature_lr / 20.0, "name": "f_rest"},
-            {'params': [self._opacity], 'lr': training_args.opacity_lr, "name": "opacity"},
-            {'params': [self._scaling], 'lr': training_args.scaling_lr, "name": "scaling"},
-            {'params': [self._rotation], 'lr': training_args.rotation_lr, "name": "rotation"}
-        ]
-
-        self.optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
-        self.xyz_scheduler_args = get_expon_lr_func(lr_init=training_args.position_lr_init*self.spatial_lr_scale,
-                                                    lr_final=training_args.position_lr_final*self.spatial_lr_scale,
-                                                    lr_delay_mult=training_args.position_lr_delay_mult,
-                                                    max_steps=training_args.position_lr_max_steps)
-        
-        for c in centers:
-            c_tensor = torch.tensor(np.asarray(c)).float().cuda()
-            self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
-            lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
-            self.center_and_scale_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
+            self.optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
+            self.xyz_scheduler_args = get_expon_lr_func(lr_init=training_args.position_lr_init*self.spatial_lr_scale,
+                                                        lr_final=training_args.position_lr_final*self.spatial_lr_scale,
+                                                        lr_delay_mult=training_args.position_lr_delay_mult,
+                                                        max_steps=training_args.position_lr_max_steps)
+        else:
+            l = [
+                {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
+            ]
+            self.scale_optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
+            for c in centers:
+                c_tensor = torch.tensor(np.asarray(c)).float().cuda()
+                self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
+                lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
+                self.center_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
             
 
     def update_learning_rate(self, iteration):
@@ -177,7 +192,7 @@ class GaussianModel:
                 param_group['lr'] = lr
                 return lr
             
-        for opt in self.center_and_scale_optimizers:
+        for opt in self.center_optimizers:
             for param_group in opt.param_groups:
                 if param_group["name"] == "center":
                     lr = self.xyz_scheduler_args(iteration)
@@ -202,14 +217,18 @@ class GaussianModel:
         mkdir_p(os.path.dirname(path))
 
         if center is None:
-            xyz = self._xyz.detach().cpu().numpy()
+            xyz = self._xyz
         else:
-            xyz = (self._xyz + center).detach().cpu().numpy()
+            xyz = self._xyz + center
+        centroid = xyz.mean(dim=0)
+        xyz = ((xyz - centroid) * self.scale) + centroid
+        xyz = xyz.detach().cpu().numpy()
+
         normals = np.zeros_like(xyz)
         f_dc = self._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
         f_rest = self._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
         opacities = self._opacity.detach().cpu().numpy()
-        scale = self._scaling.detach().cpu().numpy()
+        scale = (self._scaling + torch.log(self.scale)).detach().cpu().numpy()
         rotation = self._rotation.detach().cpu().numpy()
 
         dtype_full = [(attribute, 'f4') for attribute in self.construct_list_of_attributes()]
@@ -259,12 +278,21 @@ class GaussianModel:
         for idx, attr_name in enumerate(rot_names):
             rots[:, idx] = np.asarray(plydata.elements[0][attr_name])
 
-        self._xyz = nn.Parameter(torch.tensor(xyz, dtype=torch.float, device="cuda").requires_grad_(True))
-        self._features_dc = nn.Parameter(torch.tensor(features_dc, dtype=torch.float, device="cuda").transpose(1, 2).contiguous().requires_grad_(True))
-        self._features_rest = nn.Parameter(torch.tensor(features_extra, dtype=torch.float, device="cuda").transpose(1, 2).contiguous().requires_grad_(True))
-        self._opacity = nn.Parameter(torch.tensor(opacities, dtype=torch.float, device="cuda").requires_grad_(True))
-        self._scaling = nn.Parameter(torch.tensor(scales, dtype=torch.float, device="cuda").requires_grad_(True))
-        self._rotation = nn.Parameter(torch.tensor(rots, dtype=torch.float, device="cuda").requires_grad_(True))
+        if self.assembly:
+            self._xyz = torch.tensor(xyz, dtype=torch.float, device="cuda")
+            self._features_dc = torch.tensor(features_dc, dtype=torch.float, device="cuda").transpose(1, 2).contiguous()
+            self._features_rest = torch.tensor(features_extra, dtype=torch.float, device="cuda").transpose(1, 2).contiguous()
+            self._opacity = torch.tensor(opacities, dtype=torch.float, device="cuda")
+            self._scaling = torch.tensor(scales, dtype=torch.float, device="cuda")
+            self._rotation = torch.tensor(rots, dtype=torch.float, device="cuda")
+        else:
+            self._xyz = nn.Parameter(torch.tensor(xyz, dtype=torch.float, device="cuda").requires_grad_(True))
+            self._features_dc = nn.Parameter(torch.tensor(features_dc, dtype=torch.float, device="cuda").transpose(1, 2).contiguous().requires_grad_(True))
+            self._features_rest = nn.Parameter(torch.tensor(features_extra, dtype=torch.float, device="cuda").transpose(1, 2).contiguous().requires_grad_(True))
+            self._opacity = nn.Parameter(torch.tensor(opacities, dtype=torch.float, device="cuda").requires_grad_(True))
+            self._scaling = nn.Parameter(torch.tensor(scales, dtype=torch.float, device="cuda").requires_grad_(True))
+            self._rotation = nn.Parameter(torch.tensor(rots, dtype=torch.float, device="cuda").requires_grad_(True))
+        self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
 
         self.active_sh_degree = self.max_sh_degree
 
