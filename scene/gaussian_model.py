@@ -282,6 +282,7 @@ class GaussianModel:
             rots[:, idx] = np.asarray(plydata.elements[0][attr_name])
 
         if zero_center is not None:
+            xyz = torch.tensor(xyz, dtype=torch.float, device="cuda")
             centroid = xyz.mean(dim=0)
             xyz = xyz - centroid + zero_center
         if self.assembly:
