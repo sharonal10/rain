@@ -171,13 +171,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
 
             with torch.no_grad():
-                ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
-                if iteration % 10 == 0:
-                    progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}", "num_gaussians" : f"{gaussians.get_xyz.shape[0]}"})
-                    progress_bar.update(5)
-                if iteration == opt.iterations:
-                    progress_bar.close()
-                
                 training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
                     print("\n[ITER {}] Saving Gaussians".format(iteration))
@@ -219,6 +212,12 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
 
             with torch.no_grad():
+                ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
+                if iteration % 10 == 0:
+                    progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}", "num_gaussians" : f"{gaussians.get_xyz.shape[0]}"})
+                    progress_bar.update(5)
+                if iteration == opt.iterations:
+                    progress_bar.close()
                 
 
                 if iteration < opt.iterations:
