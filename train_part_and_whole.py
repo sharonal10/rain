@@ -38,7 +38,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     gaussians_list = []
     scene_list = []
     for mask_id in range(args_dict['num_masks']):
-        gaussians = GaussianModel(dataset.sh_degree, divide_ratio)
+        gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id)
         gaussians.training_setup(opt) 
         gaussians_list.append(gaussians)
