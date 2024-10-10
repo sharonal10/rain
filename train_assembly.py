@@ -66,7 +66,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     }
     for mask_id in [0, 4]: # dresser body + bottom drawer
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
-        scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, zero_center=zero_center, assembly_source=assembly_sources[mask_id])
+        scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, zero_center=(zero_center if mask_id == 4 else None), assembly_source=assembly_sources[mask_id])
         if mask_id == 0:
             gaussians.training_setup(opt, []) 
         else:
@@ -171,7 +171,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
 
             with torch.no_grad():
-                training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
                     print("\n[ITER {}] Saving Gaussians".format(iteration))
                     scene.save(iteration)
