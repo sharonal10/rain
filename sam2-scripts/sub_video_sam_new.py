@@ -2,8 +2,8 @@ import os
 from PIL import Image
 import numpy as np
 import torch
-from sam2.build_sam import build_sam2, build_sam2_video_predictor
-from sam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
+from sam2.sam2.build_sam import build_sam2, build_sam2_video_predictor
+from sam2.sam2.automatic_mask_generator import SAM2AutomaticMaskGenerator
 import matplotlib.pyplot as plt
 import argparse
 import cv2
@@ -17,8 +17,8 @@ args = parser.parse_args()
 # Setup
 video_path = args.input_dir
 binary_mask_output_dir = args.output_dir  # Directory to save binary masks
-sam2_checkpoint = "checkpoints/sam2_hiera_large.pt"
-model_cfg = "sam2_hiera_l.yaml"
+sam2_checkpoint = "sam2/checkpoints/sam2_hiera_large.pt"
+model_cfg = "sam2/sam2_hiera_l.yaml"
 device = "cuda"
 min_area = args.min_area
 
