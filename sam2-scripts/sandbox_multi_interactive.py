@@ -34,8 +34,8 @@ def parse_args():
 args = parse_args()
 os.makedirs(args.output_dir, exist_ok=True)
 
-sam2_checkpoint = "checkpoints/sam2_hiera_large.pt"
-model_cfg = "sam2_hiera_l.yaml"
+sam2_checkpoint = "sam2/checkpoints/sam2.1_hiera_large.pt"
+model_cfg = "configs/sam2.1/sam2.1_hiera_l.yaml"
 
 sam2 = build_sam2(model_cfg, sam2_checkpoint, device='cuda', apply_postprocessing=False)
 
