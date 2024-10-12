@@ -24,14 +24,21 @@ parser = argparse.ArgumentParser(description="SAM2 Video Segmentation and Mask G
 parser.add_argument("--input_dir", type=str, required=True, help="Directory containing video frames")
 parser.add_argument("--output_dir", type=str, required=True, help="Directory to save binary masks and results")
 parser.add_argument("--min_area", type=int, default=2000, help="Minimum mask area")
+parser.add_argument("--sam_version", type=float)
 args = parser.parse_args()
 
 # Setup
 video_path = args.input_dir
 print(os.listdir('sam2'))
 binary_mask_output_dir = args.output_dir  # Directory to save binary masks
-sam2_checkpoint = "sam2/checkpoints/sam2.1_hiera_large.pt"
-model_cfg = "configs/sam2.1/sam2.1_hiera_l.yaml"
+supported_versions = [2.0, 2.1]
+assert args.sam_version in supported_versions, f"only versions {supported_versions} are supported"
+if args.sam_version == 2.0:
+    sam2_checkpoint = "sam2/checkpoints/sam2_hiera_large.pt"
+    model_cfg = "configs/sam2/sam2_hiera_l.yaml"
+elif args.sam_version == 2.1:
+    sam2_checkpoint = "sam2/checkpoints/sam2.1_hiera_large.pt"
+    model_cfg = "configs/sam2.1/sam2.1_hiera_l.yaml"
 device = "cuda"
 min_area = args.min_area
 
