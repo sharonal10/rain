@@ -1,3 +1,6 @@
 [submodule "sam2"]
 	path = sam2
 	url = https://github.com/facebookresearch/sam2.git
+[submodule "Depth-Anything"]
+	path = Depth-Anything
+	url = https://github.com/LiheYoung/Depth-Anything.git
