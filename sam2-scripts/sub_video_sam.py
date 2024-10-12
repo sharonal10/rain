@@ -8,6 +8,18 @@ import matplotlib.pyplot as plt
 import argparse
 import cv2
 
+
+"""
+input directory structure should be as follows:
+<input_dir>
+    |
+    |--0001.jpg
+    |--0002.jpg
+    |--etc.
+where each jpg file is the corresponding frame of a video.
+Must be run from repo's base directory (rain), using `python sam2-scripts/sub_video_sam.py ...`
+"""
+
 parser = argparse.ArgumentParser(description="SAM2 Video Segmentation and Mask Generation")
 parser.add_argument("--input_dir", type=str, required=True, help="Directory containing video frames")
 parser.add_argument("--output_dir", type=str, required=True, help="Directory to save binary masks and results")
