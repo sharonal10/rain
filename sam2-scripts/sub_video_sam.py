@@ -59,8 +59,8 @@ if args.sam_version == 2.0:
     sam2_checkpoint = "sam2/checkpoints/sam2_hiera_large.pt"
     model_cfg = "configs/sam2/sam2_hiera_l.yaml"
 elif args.sam_version == 2.1:
-    sam2_checkpoint = "sam2/checkpoints/sam2.1_hiera_large.pt"
-    model_cfg = "configs/sam2.1/sam2.1_hiera_l.yaml"
+    sam2_checkpoint = "sam2/checkpoints/sam2.1_hiera_base_plus.pt"
+    model_cfg = "configs/sam2.1/sam2.1_hiera_b+.yaml"
 device = "cuda"
 min_area = args.min_area
 
