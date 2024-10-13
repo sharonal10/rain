@@ -38,7 +38,9 @@ sam2_checkpoint = "sam2/checkpoints/sam2.1_hiera_large.pt"
 model_cfg = "configs/sam2.1/sam2.1_hiera_l.yaml"
 
 sam2 = build_sam2(model_cfg, sam2_checkpoint, device='cuda', apply_postprocessing=False)
-mask_generator = SAM2AutomaticMaskGenerator(
+
+def process_images(input_dir, output_dir, min_area):
+    mask_generator = SAM2AutomaticMaskGenerator(
     model=sam2,
     points_per_side=64,
     points_per_batch=128,
@@ -48,11 +50,10 @@ mask_generator = SAM2AutomaticMaskGenerator(
     crop_n_layers=1,
     box_nms_thresh=0.7,
     crop_n_points_downscale_factor=2,
-    min_mask_region_area=2.0,
+    min_mask_region_area=min_area,
     use_m2m=True,
 )
-
-def process_images(input_dir, output_dir):
+    
     os.makedirs(output_dir, exist_ok=True)
     
     image_files = [f for f in os.listdir(input_dir) if f.lower().endswith(('.png', '.jpg', '.jpeg', '.bmp', '.tiff'))]
@@ -79,10 +80,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Process all images in an input directory and save the results to an output directory.")
     parser.add_argument('-i', '--input_dir', required=True, help="Directory containing images to process.")
     parser.add_argument('-o', '--output_dir', required=True, help="Directory to save processed images.")
+    parser.add_argument("--min_area", type=int, default=2000, help="Minimum mask area")
     
     return parser.parse_args()
 
 if __name__ == "__main__":
     args = parse_args()
-    process_images(args.input_dir, args.output_dir)
+    process_images(args.input_dir, args.output_dir, args.min_area)
 
