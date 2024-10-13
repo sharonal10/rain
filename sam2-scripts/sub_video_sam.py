@@ -184,7 +184,7 @@ height, width, _ = first_frame.shape
 
 # Initialize the video writer
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # Codec for mp4 video
-video_writer = cv2.VideoWriter(os.path.join(binary_mask_output_dir, f'{binary_mask_output_dir}.mp4'), fourcc, 30, (width, height))
+video_writer = cv2.VideoWriter(os.path.join(binary_mask_output_dir, f'{os.path.basename(binary_mask_output_dir)}.mp4'), fourcc, 30, (width, height))
 
 # Write each frame to the video
 for frame_file in frame_files:
