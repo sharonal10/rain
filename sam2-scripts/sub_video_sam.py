@@ -116,7 +116,7 @@ mask_generator = SAM2AutomaticMaskGenerator(
     use_m2m=True,
 )
 auto_masks = mask_generator.generate(first_frame)
-# print(x, "Number of auto-masks:", len(auto_masks))
+print("Number of auto-masks:", len(auto_masks))
 
 # Add every 'auto-mask' as it's own prompt for video tracking
 predictor = build_sam2_video_predictor(model_cfg, sam2_checkpoint, device=device)
