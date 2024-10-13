@@ -41,18 +41,18 @@ sam2 = build_sam2(model_cfg, sam2_checkpoint, device='cuda', apply_postprocessin
 
 def process_images(input_dir, output_dir, min_area):
     mask_generator = SAM2AutomaticMaskGenerator(
-    model=sam2,
-    points_per_side=64,
-    points_per_batch=128,
-    pred_iou_thresh=0.7,
-    stability_score_thresh=0.92,
-    stability_score_offset=0.7,
-    crop_n_layers=1,
-    box_nms_thresh=0.7,
-    crop_n_points_downscale_factor=2,
-    min_mask_region_area=min_area,
-    use_m2m=True,
-)
+        model=sam2,
+        points_per_side=64,
+        points_per_batch=128,
+        pred_iou_thresh=0.7,
+        stability_score_thresh=0.92,
+        stability_score_offset=0.7,
+        crop_n_layers=1,
+        box_nms_thresh=0.7,
+        crop_n_points_downscale_factor=2,
+        min_mask_region_area=min_area,
+        use_m2m=True,
+    )
     
     os.makedirs(output_dir, exist_ok=True)
     
