@@ -35,8 +35,8 @@ def ask_gpt4_with_images(question, image_path_1, image_path_2):
     answer = response['choices'][0]['message']['content']
     return answer
 
-image_path_1 = "path_to_your_first_image.png"
-image_path_2 = "path_to_your_second_image.png"
+image_path_1 = "vlm/testdata/dresser.jpg"
+image_path_2 = "vlm/testdata/masks.jpg"
 question = f"{image_path_1} is a photo of an object, while {image_path_2} visualises its SAM masks. Which colors correspond to which parts?"
 
 answer = ask_gpt4_with_images(question, image_path_1, image_path_2)
