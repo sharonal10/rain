@@ -45,7 +45,6 @@ def ask_gpt4_with_images(question, image_path_1, image_path_2):
             }
         ],
     )
-    import pdb; pdb.set_trace()
     return response.choices[0].message.content
 
 image_path_1 = "vlm/testdata/dresser.jpg"
@@ -54,4 +53,4 @@ question = f"{image_path_1} is a photo of an object, while {image_path_2} visual
 
 answer = ask_gpt4_with_images(question, image_path_1, image_path_2)
 
-print("GPT-4's answer:", answer)
+print(answer)
