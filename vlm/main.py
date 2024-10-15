@@ -27,7 +27,7 @@ def ask_gpt4_with_images(question, image_path_1, image_path_2):
     prompt = f"Here are two images: {image_path_1} and {image_path_2}. {question}"
 
     response = client.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o",
         messages=[
             {
                 "role": "user",
