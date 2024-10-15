@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 from PIL import Image
 import io
 import argparse
@@ -8,7 +8,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--api_key', type=str, required=True)
 args = parser.parse_args()
 
-openai.api_key = args.api_key
+from openai import OpenAI
+
+client = OpenAI(
+  api_key=args.api_key,
+)
 
 def image_to_base64(image_path):
     with open(image_path, "rb") as image_file:
@@ -22,21 +26,27 @@ def ask_gpt4_with_images(question, image_path_1, image_path_2):
 
     prompt = f"Here are two images: {image_path_1} and {image_path_2}. {question}"
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",  # Replace with the correct model you have access to
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
                 "content": [
                     {"type": "text", "text": prompt},
-                    {"type": "image_url", "image_url": {"url": img1_b64}},
-                    {"type": "image_url", "image_url": {"url": img2_b64}},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": img1_b64},
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": img2_b64},
+                    },
                 ],
             }
-        ]
+        ],
     )
-    answer = response['choices'][0]['message']['content']
-    return answer
+    
+    return response.choices[0].text
 
 image_path_1 = "vlm/testdata/dresser.jpg"
 image_path_2 = "vlm/testdata/masks.jpg"
