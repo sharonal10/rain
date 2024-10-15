@@ -2,6 +2,7 @@ import openai
 from PIL import Image
 import io
 import argparse
+import base64
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--api_key', type=str, required=True)
@@ -9,29 +10,31 @@ args = parser.parse_args()
 
 openai.api_key = args.api_key
 
-def ask_gpt4_with_images(question, image_path_1, image_path_2):
-    img1 = Image.open(image_path_1)
-    img1_bytes = io.BytesIO()
-    img1.save(img1_bytes, format=img1.format)
+def image_to_base64(image_path):
+    with open(image_path, "rb") as image_file:
+        encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
+    img_type = Image.open(image_path).format.lower()
+    return f"data:image/{img_type};base64,{encoded_string}"
 
-    img2 = Image.open(image_path_2)
-    img2_bytes = io.BytesIO()
-    img2.save(img2_bytes, format=img2.format)
+def ask_gpt4_with_images(question, image_path_1, image_path_2):
+    img1_b64 = image_to_base64(image_path_1)
+    img2_b64 = image_to_base64(image_path_2)
 
     prompt = f"Here are two images: {image_path_1} and {image_path_2}. {question}"
 
     response = openai.ChatCompletion.create(
-        model="gpt-4-vision", 
+        model="gpt-4o-mini",  # Replace with the correct model you have access to
         messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt},
-        ],
-        files=[
-            {"name": "image1.png", "data": img1_bytes.getvalue()},
-            {"name": "image2.png", "data": img2_bytes.getvalue()},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {"url": img1_b64}},
+                    {"type": "image_url", "image_url": {"url": img2_b64}},
+                ],
+            }
         ]
     )
-    
     answer = response['choices'][0]['message']['content']
     return answer
 
