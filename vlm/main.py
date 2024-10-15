@@ -45,8 +45,8 @@ def ask_gpt4_with_images(question, image_path_1, image_path_2):
             }
         ],
     )
-    
-    return response.choices[0].text
+    import pdb; pdb.set_trace()
+    return response.choices[0].message.content
 
 image_path_1 = "vlm/testdata/dresser.jpg"
 image_path_2 = "vlm/testdata/masks.jpg"
