@@ -176,9 +176,14 @@ for mask_idx, mask_result in enumerate(auto_masks):
 # Do video segmentation (same as video segmentation notebook)
 video_segments = {}
 for out_frame_idx, out_obj_ids, out_mask_logits in predictor.propagate_in_video(inference_state):
-    video_segments[out_frame_idx] = {
-        out_obj_id: (out_mask_logits[i] > 0.0).cpu().numpy() for i, out_obj_id in enumerate(out_obj_ids)
-    }
+    video_segments[out_frame_idx] = {}
+    zeros = []
+    for i, out_obj_id in enumerate(out_obj_ids):
+        video_segments[out_frame_idx][out_obj_id] = (out_mask_logits[i] > 0.0).cpu().numpy()
+        if video_segments[out_frame_idx][out_obj_id].sum() == 0:
+            zeros.append(out_obj_id)
+
+    print(out_frame_idx, zeros)
 
 for out_frame_idx in range(len(video_segments)):
     plt.figure(figsize=(6, 4))
