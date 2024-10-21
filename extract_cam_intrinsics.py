@@ -94,8 +94,8 @@ def write_full_info_to_file(cameras, output_file):
 # Main function with argparse
 def main():
     parser = argparse.ArgumentParser(description="Extract COLMAP camera intrinsics and write to files.")
-    parser.add_argument("input_file", type=str, help="Path to the COLMAP binary camera file.")
-    parser.add_argument("output_dir", type=str, help="Directory to save the output text files.")
+    parser.add_argument("-i", "--input_file", type=str, help="Path to the COLMAP binary camera file.")
+    parser.add_argument("-o", "--output_dir", type=str, help="Directory to save the output text files.")
     
     args = parser.parse_args()
     
