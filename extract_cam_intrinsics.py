@@ -58,7 +58,7 @@ def read_intrinsics_binary(path_to_model_file):
     return cameras
 
 def write_intrinsics_to_file(cameras, output_file):
-    with open(output_file, "w") as f:
+    with open(output_file, "a") as f:
         for camera_id, intr in cameras.items():
             fx, fy, cx, cy = None, None, None, None
             if intr.model == "SIMPLE_PINHOLE" or intr.model == "SIMPLE_RADIAL":
@@ -81,17 +81,17 @@ def write_intrinsics_to_file(cameras, output_file):
             f.write(f"fy: {fy}\n")
             f.write(f"cx: {cx}\n")
             f.write(f"cy: {cy}\n")
-            f.write("\n")
+            f.write("\n\n")
 
 def write_full_info_to_file(cameras, output_file):
-    with open(output_file, "w") as f:
+    with open(output_file, "a") as f:
         for camera_id, intr in cameras.items():
             f.write(f"camera_id: {camera_id}\n")
             f.write(f"model: {intr.model}\n")
             f.write(f"width: {intr.width}\n")
             f.write(f"height: {intr.height}\n")
             f.write(f"params: {intr.params}\n")
-            f.write("\n")
+            f.write("\n\n")
 
 def main():
     parser = argparse.ArgumentParser(description="Extract COLMAP camera intrinsics and write to files.")
