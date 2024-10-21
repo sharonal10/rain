@@ -1,10 +1,101 @@
 
 """
-Input/output paths (--img-dir, --depth-outdir, --output-point-cloud).
-Depth-Anything parameters (--encoder for encoder type).
-Camera intrinsics (--width, --height, --fx, --fy, --cx, --cy).
-Depth map processing (--depth-scale, --depth-trunc).
+generate_point_cloud.py
+
+This script generates a 3D point cloud from depth maps using binary masks to filter unwanted regions.
+It takes a folder of images, applies Depth-Anything to generate depth maps, and uses Open3D to
+combine the depth information into a point cloud. Only unmasked regions contribute to the final point cloud.
+
+Usage:
+    python generate_point_cloud.py <img_dir> <mask_dir> \
+        --depth_outdir <depth_outdir> \
+        --output_point_cloud <output_point_cloud> \
+        --encoder <vits | vitb | vitl> \
+        --width <image_width> --height <image_height> \
+        --fx <focal_length_x> --fy <focal_length_y> \
+        --cx <principal_point_x> --cy <principal_point_y> \
+        --depth_scale <depth_scale> --depth_trunc <depth_trunc>
+
+Arguments:
+    1. <img_dir>: 
+       - The path to the folder containing the input PNG images.
+       - Example: /viscam/projects/image2Blender/RAIN-GS/sugar/imgs/dresser_5_masks_with_full/images/
+
+    2. <mask_dir>:
+       - The path to the folder containing the corresponding binary PNG masks.
+       - Each mask should have the same filename as its corresponding image.
+       - Example: /viscam/projects/image2Blender/RAIN-GS/sugar/imgs/dresser_5_masks_with_full/masks/0001/
+
+Optional Arguments:
+    --depth_outdir:
+       - Directory to save the generated depth maps.
+       - Default: "output_depth_maps/"
+       - Example: /viscam/projects/image2Blender/RAIN-GS/output_depth_maps/
+
+    --output_point_cloud:
+       - File path to save the final point cloud (in PLY format).
+       - Default: "initialize_point_cloud.ply"
+       - Example: /viscam/projects/image2Blender/RAIN-GS/initialize_point_cloud.ply
+
+    --encoder:
+       - Encoder type used by Depth-Anything.
+       - Options: "vits" (small), "vitb" (base), "vitl" (large).
+       - Default: "vitb"
+       - Example: --encoder vitb
+
+    --width, --height:
+       - The resolution (width and height) of the input images in pixels.
+       - Default: 640 (width), 480 (height)
+       - Example: --width 640 --height 480
+
+    --fx, --fy:
+       - Focal lengths in the x and y directions, in pixels.
+       - These values describe how much the camera "magnifies" the scene along each axis.
+       - Default: 525.0 (for both fx and fy)
+       - Example: --fx 525.0 --fy 525.0
+
+    --cx, --cy:
+       - The principal point offsets in the x and y directions, in pixels.
+       - These values describe where the camera's optical axis intersects the image plane.
+       - Default: cx = 319.5, cy = 239.5 (for a 640x480 image, at the center)
+       - Example: --cx 319.5 --cy 239.5
+
+    --depth_scale:
+       - A scaling factor to convert depth values from the depth map to real-world units.
+       - Default: 1000.0
+       - Example: --depth_scale 1000.0
+
+    --depth_trunc:
+       - Maximum depth value. Depth values beyond this threshold will be truncated.
+       - Useful to ignore noise at very large depths.
+       - Default: 3.0
+       - Example: --depth_trunc 3.0
+
+Functionality:
+    1. **Reads input images and corresponding masks.** 
+       - Each mask should be a binary PNG image where pixel values are 0 (masked) or 255 (unmasked).
+    
+    2. **Runs Depth-Anything to generate grayscale depth maps** from the input images.
+       - Depth maps are saved to the specified output directory (`--depth_outdir`).
+
+    3. **Generates a 3D point cloud** from the depth maps using Open3D.
+       - Only unmasked points contribute to the final point cloud.
+
+    4. **Saves the generated point cloud** to a PLY file.
+
+Example Command:
+    python generate_point_cloud.py \
+        /viscam/projects/image2Blender/RAIN-GS/sugar/imgs/dresser_5_masks_with_full/images/ \
+        /viscam/projects/image2Blender/RAIN-GS/sugar/imgs/dresser_5_masks_with_full/masks/0001/ \
+        --depth_outdir /viscam/projects/image2Blender/RAIN-GS/output_depth_maps/ \
+        --output_point_cloud /viscam/projects/image2Blender/RAIN-GS/initialize_point_cloud.ply \
+        --encoder vitb \
+        --width 640 --height 480 \
+        --fx 525.0 --fy 525.0 \
+        --cx 319.5 --cy 239.5 \
+        --depth_scale 1000.0 --depth_trunc 3.0
 """
+
 
 import os
 import sys
