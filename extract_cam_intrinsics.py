@@ -1,34 +1,34 @@
 import numpy as np
 import os
 import argparse
-from collections import namedtuple
+import collections
 import struct
 
-# Define CameraModel as a namedtuple
-CameraModel = namedtuple("CameraModel", ["model_id", "model_name", "num_params"])
-
-# Camera models with their corresponding IDs and number of parameters
+CameraModel = collections.namedtuple(
+    "CameraModel", ["model_id", "model_name", "num_params"])
+Camera = collections.namedtuple(
+    "Camera", ["id", "model", "width", "height", "params"])
+BaseImage = collections.namedtuple(
+    "Image", ["id", "qvec", "tvec", "camera_id", "name", "xys", "point3D_ids"])
+Point3D = collections.namedtuple(
+    "Point3D", ["id", "xyz", "rgb", "error", "image_ids", "point2D_idxs"])
 CAMERA_MODELS = {
-    0: CameraModel(model_id=0, model_name="SIMPLE_PINHOLE", num_params=3),
-    1: CameraModel(model_id=1, model_name="PINHOLE", num_params=4),
-    2: CameraModel(model_id=2, model_name="SIMPLE_RADIAL", num_params=4),
-    3: CameraModel(model_id=3, model_name="RADIAL", num_params=5),
-    4: CameraModel(model_id=4, model_name="OPENCV", num_params=8),
-    5: CameraModel(model_id=5, model_name="OPENCV_FISHEYE", num_params=8),
-    6: CameraModel(model_id=6, model_name="FULL_OPENCV", num_params=12),
-    7: CameraModel(model_id=7, model_name="FOV", num_params=5),
-    8: CameraModel(model_id=8, model_name="SIMPLE_RADIAL_FISHEYE", num_params=4),
-    9: CameraModel(model_id=9, model_name="RADIAL_FISHEYE", num_params=5),
-    10: CameraModel(model_id=10, model_name="THIN_PRISM_FISHEYE", num_params=12)
+    CameraModel(model_id=0, model_name="SIMPLE_PINHOLE", num_params=3),
+    CameraModel(model_id=1, model_name="PINHOLE", num_params=4),
+    CameraModel(model_id=2, model_name="SIMPLE_RADIAL", num_params=4),
+    CameraModel(model_id=3, model_name="RADIAL", num_params=5),
+    CameraModel(model_id=4, model_name="OPENCV", num_params=8),
+    CameraModel(model_id=5, model_name="OPENCV_FISHEYE", num_params=8),
+    CameraModel(model_id=6, model_name="FULL_OPENCV", num_params=12),
+    CameraModel(model_id=7, model_name="FOV", num_params=5),
+    CameraModel(model_id=8, model_name="SIMPLE_RADIAL_FISHEYE", num_params=4),
+    CameraModel(model_id=9, model_name="RADIAL_FISHEYE", num_params=5),
+    CameraModel(model_id=10, model_name="THIN_PRISM_FISHEYE", num_params=12)
 }
-
-class Camera:
-    def __init__(self, id, model, width, height, params):
-        self.id = id
-        self.model = model
-        self.width = width
-        self.height = height
-        self.params = params
+CAMERA_MODEL_IDS = dict([(camera_model.model_id, camera_model)
+                         for camera_model in CAMERA_MODELS])
+CAMERA_MODEL_NAMES = dict([(camera_model.model_name, camera_model)
+                           for camera_model in CAMERA_MODELS])
 
 def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
     data = fid.read(num_bytes)
@@ -37,24 +37,24 @@ def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
 def read_intrinsics_binary(path_to_model_file):
     cameras = {}
     with open(path_to_model_file, "rb") as fid:
-        num_cameras = read_next_bytes(fid, 8, np.uint64)[0]
+        num_cameras = read_next_bytes(fid, 8, "Q")[0]
         for _ in range(num_cameras):
-            camera_properties = read_next_bytes(fid, 24, np.dtype([("camera_id", np.int32), 
-                                                                  ("model_id", np.int32), 
-                                                                  ("width", np.uint64), 
-                                                                  ("height", np.uint64)]))
-            camera_id = camera_properties["camera_id"]
-            model_id = camera_properties["model_id"]
-            model = CAMERA_MODELS[model_id]
-            width = camera_properties["width"]
-            height = camera_properties["height"]
-            
-            # Read the camera parameters based on the model
-            num_params = model.num_params
-            params = read_next_bytes(fid, 8 * num_params, np.float64)
-            
-            cameras[camera_id] = Camera(id=camera_id, model=model.model_name, 
-                                        width=width, height=height, params=params)
+            camera_properties = read_next_bytes(
+                fid, num_bytes=24, format_char_sequence="iiQQ")
+            camera_id = camera_properties[0]
+            model_id = camera_properties[1]
+            model_name = CAMERA_MODEL_IDS[camera_properties[1]].model_name
+            width = camera_properties[2]
+            height = camera_properties[3]
+            num_params = CAMERA_MODEL_IDS[model_id].num_params
+            params = read_next_bytes(fid, num_bytes=8*num_params,
+                                     format_char_sequence="d"*num_params)
+            cameras[camera_id] = Camera(id=camera_id,
+                                        model=model_name,
+                                        width=width,
+                                        height=height,
+                                        params=np.array(params))
+        assert len(cameras) == num_cameras
     return cameras
 
 def write_intrinsics_to_file(cameras, output_file):
