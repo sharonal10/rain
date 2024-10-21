@@ -2,6 +2,7 @@ import numpy as np
 import os
 import argparse
 from collections import namedtuple
+import struct
 
 # Define CameraModel as a namedtuple
 CameraModel = namedtuple("CameraModel", ["model_id", "model_name", "num_params"])
@@ -29,8 +30,9 @@ class Camera:
         self.height = height
         self.params = params
 
-def read_next_bytes(fid, num_bytes, dtype):
-    return np.frombuffer(fid.read(num_bytes), dtype=dtype)
+def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
+    data = fid.read(num_bytes)
+    return struct.unpack(endian_character + format_char_sequence, data)
 
 def read_intrinsics_binary(path_to_model_file):
     cameras = {}
