@@ -55,7 +55,6 @@ binary_mask_output_dir = args.output_dir  # Directory to save binary masks
 sam2_checkpoint = "sam2/checkpoints/sam2.1_hiera_large.pt"
 model_cfg = "configs/sam2.1/sam2.1_hiera_l.yaml"
 device = "cuda"
-min_area = args.min_area
 
 # convert from png to jpg (needed for sam)
 def convert_png_to_jpg(directory):
