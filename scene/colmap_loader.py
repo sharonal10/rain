@@ -186,7 +186,8 @@ def read_intrinsics_binary(path_to_model_file):
             model_name = CAMERA_MODEL_IDS[camera_properties[1]].model_name
             width = camera_properties[2]
             height = camera_properties[3]
-            num_params = CAMERA_MODEL_IDS[model_id].num_params
+            #commented out the number of parameters for now
+            # num_params = CAMERA_MODEL_IDS[model_id].num_params
             params = read_next_bytes(fid, num_bytes=8*num_params,
                                      format_char_sequence="d"*num_params)
             cameras[camera_id] = Camera(id=camera_id,
