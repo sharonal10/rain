@@ -14,7 +14,7 @@ def main(args):
 
     print(f"[DEBUG] Processing {depth_map_path} with mask {mask_path}")
 
-    img_path = r'/viscam/projects/image2Blender/RAIN-GS/sugar/imgs/dresser_5_masks_with_full/images/0001.png'
+    img_path = r'/viscam/projects/image2Blender/RAIN-GS/Depth-Anything/10_21-dresser-no_bg/0001.png'
     color_image = o3d.io.read_image(img_path)
     depth_image = o3d.io.read_image(depth_map_path)
     mask_image = o3d.io.read_image(mask_path)
