@@ -170,14 +170,17 @@ def read_box(filename):
         numbers = list(map(float, file.read().split()))
 
     # Ensure we have exactly 9 numbers
-    if len(numbers) != 10:
-        raise ValueError("The file does not contain exactly 10 numbers.")
+    if len(numbers) not in [9, 10]:
+        raise ValueError("The file does not contain exactly 9 or 10 numbers.")
 
     # Assign the numbers to respective categories
     box_center = np.array(numbers[0:3])
     box_rotation = np.radians(numbers[3:6])
     box_size = np.array(numbers[6:9])
-    num_points = int(numbers[9])
+    if len(numbers) == 10:
+        num_points = int(numbers[9])
+    else:
+        num_points = 2000
 
     return box_center, box_rotation, box_size, num_points
 
@@ -192,16 +195,18 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.txt")
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
-
+    masks_folder = os.path.join(path, 'masks')
+    available_masks = [int(x) for x in os.listdir(masks_folder)] # we only take those frames which have available masks
     reading_dir = "images" if images == None else images
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics,
-                                           images_folder=os.path.join(path, reading_dir), masks_folder=os.path.join(path, 'masks'), mask_id=mask_id)
+                                           images_folder=os.path.join(path, reading_dir), masks_folder=masks_folder, mask_id=mask_id)
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
-    llffhold = len(cam_infos)/args_dict['num_cams']
+    # llffhold = len(cam_infos)/args_dict['num_cams']
     print('args.eval', args_dict['eval'])
     if eval and not args_dict['render_only']:
-        train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 0]
-        test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 0]
+        # available_masks and cam_infos are offset by 1
+        train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx + 1 in available_masks]
+        test_cam_infos = [] #[c for idx, c in enumerate(cam_infos) if idx % llffhold != 0]
     else:
         train_cam_infos = cam_infos
         test_cam_infos = []

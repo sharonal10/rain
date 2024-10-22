@@ -112,7 +112,6 @@ if __name__ == "__main__":
     parser.add_argument("--skip_train", action="store_true")
     parser.add_argument("--skip_test", action="store_true")
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument("--num_cams", default=10, type=int)
     parser.add_argument("--ours_new", action="store_true", help="Use our initialisation version 2")
     parser.add_argument("--ours", action="store_true", help="Use our initialisation version 2")
     parser.add_argument("--render_source", default="point_cloud")

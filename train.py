@@ -394,7 +394,6 @@ if __name__ == "__main__":
     parser.add_argument("--ours_new", action="store_true", help="Use our initialisation version 2")
     parser.add_argument("--warmup_iter", type=int, default=0)
     parser.add_argument("--train_from", type=str, default="random", choices=["random", "reprojection", "cluster", "noisy_sfm"])
-    parser.add_argument('--num_cams', type=int, default=10)
     
     parser.add_argument("--box_gen", action="store_true", help="Use box_gen initialisation")
     parser.add_argument("--box_name", type=str, help="name of the .txt file with box params")
