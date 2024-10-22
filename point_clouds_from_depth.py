@@ -32,8 +32,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate a point cloud from depth maps using binary masks.")
 
     # Arguments
-    parser.add_argument("img_dir", type=str, help="Path to the folder containing PNG images.")
-    parser.add_argument("mask_dir", type=str, help="Path to the folder containing binary masks.")
+    parser.add_argument("--mask_dir", type=str, help="Path to the folder containing binary masks.")
     parser.add_argument("--depth_dir", type=str, default="output_depth_maps",
                         help="Directory of depth maps.")
     parser.add_argument("--output_point_cloud", type=str, default="initialize_point_cloud.ply",
