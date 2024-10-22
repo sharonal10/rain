@@ -22,6 +22,7 @@ def main(args):
     mask_array = np.where(mask_array >= 0.5, 1, 0)
     color_array = np.asarray(color_image)
     depth_array = np.asarray(depth_image)
+    depth_array = np.mean(depth_array, axis=2) # it's rgb for some reason
     masked_color_array = color_array * mask_array[:, :, np.newaxis]
     print(depth_array.shape, mask_array.shape)
     masked_depth_array = depth_array * mask_array
