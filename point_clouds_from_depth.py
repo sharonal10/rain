@@ -26,13 +26,13 @@ def main(args):
     masked_color_array = color_array * mask_array[:, :, np.newaxis]
     print(depth_array.shape, mask_array.shape)
     masked_depth_array = depth_array * mask_array
+    import pdb; pdb.set_trace()
     color_image = o3d.geometry.Image(masked_color_array.astype(np.uint8))
     depth_image = o3d.geometry.Image(masked_depth_array.astype(np.uint16))
     o3d.io.write_image("masked_color_image.png", color_image)
     o3d.io.write_image("masked_depth_image.png", depth_image)
     # color_image = 
 
-    # import pdb; pdb.set_trace()
 
     intrinsic = o3d.camera.PinholeCameraIntrinsic(
         args.width, args.height, args.fx, args.fy, args.cx, args.cy
