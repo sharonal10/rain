@@ -28,6 +28,8 @@ def main(args):
     masked_depth_array = depth_array * mask_array
     color_image = o3d.geometry.Image(masked_color_array.astype(np.uint8))
     depth_image = o3d.geometry.Image(masked_depth_array.astype(np.uint16))
+    o3d.io.write_image("masked_color_image.png", color_image)
+    o3d.io.write_image("masked_depth_image.png", depth_image)
     # color_image = 
 
     # import pdb; pdb.set_trace()
