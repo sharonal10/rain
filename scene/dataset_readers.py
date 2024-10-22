@@ -170,14 +170,17 @@ def read_box(filename):
         numbers = list(map(float, file.read().split()))
 
     # Ensure we have exactly 9 numbers
-    if len(numbers) != 10:
-        raise ValueError("The file does not contain exactly 10 numbers.")
+    if len(numbers) not in [9, 10]:
+        raise ValueError("The file does not contain exactly 9 or 10 numbers.")
 
     # Assign the numbers to respective categories
     box_center = np.array(numbers[0:3])
     box_rotation = np.radians(numbers[3:6])
     box_size = np.array(numbers[6:9])
-    num_points = int(numbers[9])
+    if len(numbers) == 10:
+        num_points = int(numbers[9])
+    else:
+        num_points = 2000
 
     return box_center, box_rotation, box_size, num_points
 
