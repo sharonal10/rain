@@ -32,7 +32,7 @@ def main(args):
     )
     pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image, intrinsic)
     print(f"Number of points: {len(pcd.points)}")
-    o3d.io.write_point_cloud("pc1.ply", pcd)
+    o3d.io.write_point_cloud("pc1.ply", pcd, write_ascii=True)
     # pcd = o3d.geometry.PointCloud.create_from_depth_image(
     #     depth_image, intrinsic, depth_scale=args.depth_scale,
     #     depth_trunc=args.depth_trunc, convert_rgb_to_intensity=False
