@@ -17,8 +17,9 @@ def main(args):
     depth_image = o3d.io.read_image(depth_map_path)
     mask_image = o3d.io.read_image(mask_path)
     mask_array = np.asarray(mask_image) / 255.0
-    print("Max value:", np.max(mask_array))
-    print("Min value:", np.min(mask_array))
+    mask_array = np.where(mask_array >= 0.5, 1, 0)
+
+    import pdb; pdb.set_trace()
 
     intrinsic = o3d.camera.PinholeCameraIntrinsic(
         args.width, args.height, args.fx, args.fy, args.cx, args.cy
