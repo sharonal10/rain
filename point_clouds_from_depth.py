@@ -14,19 +14,26 @@ def main(args):
 
     print(f"[DEBUG] Processing {depth_map_path} with mask {mask_path}")
 
+    img_path = r'/viscam/projects/image2Blender/RAIN-GS/sugar/imgs/dresser_5_masks_with_full/images/0001.png'
+    color_image = o3d.geometry.Image(img_path)
     depth_image = o3d.io.read_image(depth_map_path)
     mask_image = o3d.io.read_image(mask_path)
     mask_array = np.asarray(mask_image) / 255.0
     mask_array = np.where(mask_array >= 0.5, 1, 0)
+    # color_image = 
 
     import pdb; pdb.set_trace()
 
     intrinsic = o3d.camera.PinholeCameraIntrinsic(
         args.width, args.height, args.fx, args.fy, args.cx, args.cy
     )
+    rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(
+        color_image, depth_image, depth_scale=1000.0, depth_trunc=3.0, convert_rgb_to_intensity=False
+    )
+    pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image, intrinsic)
     pcd = o3d.geometry.PointCloud.create_from_depth_image(
-        depth_image, intrinsic, #depth_scale=args.depth_scale,
-        #depth_trunc=args.depth_trunc, convert_rgb_to_intensity=False
+        depth_image, intrinsic, depth_scale=args.depth_scale,
+        depth_trunc=args.depth_trunc, convert_rgb_to_intensity=False
     )
 
 if __name__ == "__main__":
