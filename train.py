@@ -50,7 +50,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         raw_centers.append(box_center)
 
     processed_centers = []
-    for i in range(3):
+    for i in range(len(raw_centers)-1):
         processed_centers.append(raw_centers[i] - raw_centers[-1])
 
     
