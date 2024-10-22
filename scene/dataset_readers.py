@@ -180,7 +180,7 @@ def read_box(filename):
     if len(numbers) == 10:
         num_points = int(numbers[9])
     else:
-        num_points = 2000
+        num_points = 5000
 
     return box_center, box_rotation, box_size, num_points
 

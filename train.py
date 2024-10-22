@@ -100,7 +100,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             gaussians = gaussians_list[sub_iter]
             scene = scene_list[sub_iter]
             viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
-            if viewpoint_cam.mask.cuda().sum() < 50:
+            if viewpoint_cam.mask.cuda().sum() < 5:
                 if (iteration in saving_iterations):
                     with torch.no_grad():
                         print("\n[ITER {}] Saving Gaussians".format(iteration))
