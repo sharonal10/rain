@@ -23,6 +23,7 @@ def main(args):
     color_array = np.asarray(color_image)
     depth_array = np.asarray(depth_image)
     masked_color_array = color_array * mask_array[:, :, np.newaxis]
+    print(depth_array.shape, mask_array.shape)
     masked_depth_array = depth_array * mask_array
     color_image = o3d.geometry.Image(masked_color_array.astype(np.uint8))
     depth_image = o3d.geometry.Image(masked_depth_array.astype(np.uint16))
