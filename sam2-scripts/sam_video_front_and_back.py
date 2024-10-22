@@ -174,8 +174,25 @@ fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 video_path = os.path.join(binary_mask_output_dir, f'{os.path.basename(binary_mask_output_dir)}.mp4')
 video_writer = cv2.VideoWriter(video_path, fourcc, 30, (width, height))
 
-for frame_file in frame_files:
+for i, frame_file in enumerate(frame_files):
     frame = cv2.imread(frame_file)
+
+    # Define the position where the text will be placed (upper right corner)
+    text = f'{i+1}'
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 1
+    thickness = 2
+    color = (0, 0, 255)  # Red color in BGR format
+    text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
+
+    # Position the text near the upper right corner, offset by 10 pixels from the border
+    text_x = frame.shape[1] - text_size[0] - 10  # Width minus text width minus some padding
+    text_y = text_size[1] + 10  # Offset from top with padding
+
+    # Add the frame number text to the frame
+    cv2.putText(frame, text, (text_x, text_y), font, font_scale, color, thickness)
+
+    # Write the frame with the text to the video
     video_writer.write(frame)
 
 video_writer.release()
