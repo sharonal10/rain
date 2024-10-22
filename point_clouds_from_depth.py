@@ -31,10 +31,11 @@ def main(args):
         color_image, depth_image, depth_scale=1000.0, depth_trunc=3.0, convert_rgb_to_intensity=False
     )
     pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image, intrinsic)
-    pcd = o3d.geometry.PointCloud.create_from_depth_image(
-        depth_image, intrinsic, depth_scale=args.depth_scale,
-        depth_trunc=args.depth_trunc, convert_rgb_to_intensity=False
-    )
+    o3d.io.write_point_cloud("pc1.ply", pcd)
+    # pcd = o3d.geometry.PointCloud.create_from_depth_image(
+    #     depth_image, intrinsic, depth_scale=args.depth_scale,
+    #     depth_trunc=args.depth_trunc, convert_rgb_to_intensity=False
+    # )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate a point cloud from depth maps using binary masks.")
