@@ -39,7 +39,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     # gather centers (hardcoded for now)
     # reference center is bottom drawer. coordinates for each center is the offset between each drawer and the bottom drawer
     # render_multi assumes that we at least want to render it once without applying an offset
-    boxes_to_load = [1, 2, 3, 4]
+    # NB this has been made general, but assumes there is only one item to be duplicated
+    # should be all duplicated ids
+    boxes_to_load = args_dict['boxes_to_load']
     raw_centers = []
     for box_id in boxes_to_load:
         box_path = os.path.join(dataset.source_path, f"sparse/0/{args_dict['box_name']}_{box_id:03}.txt")
@@ -54,12 +56,16 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     
     gaussians_list = []
     scene_list = []
-    for mask_id in [0, 4]: # dresser body + bottom drawer
+    # should be all uniques, and the last item of duplicates
+    for mask_id in args_dict['unique_mask_ids']: # dresser body + bottom drawer
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id)
-        if mask_id == 0:
+        print(f"checking if mask_id is {boxes_to_load[-1]}")
+        if mask_id != boxes_to_load[-1]:
+            print(f"unique: {mask_id}")
             gaussians.training_setup(opt, []) 
         else:
+            print(f"duplicated: {mask_id}")
             gaussians.training_setup(opt, processed_centers) 
         gaussians_list.append(gaussians)
         scene_list.append(scene)
@@ -400,6 +406,9 @@ if __name__ == "__main__":
     parser.add_argument("--use_orig", action="store_true", help="Use box_gen initialisation")
     # removed for now, will hardcode
     # parser.add_argument('--num_masks', type=int, required=True)
+    parser.add_argument("--unique_mask_ids", nargs="+", type=int, default=[], help="all uniques + the last duplicate")
+    parser.add_argument("--boxes_to_load", nargs="+", type=int, default=[], help="all duplicates")
+    
 
     parser.add_argument("--whole_for_offset_only", action="store_true", help="During Whole Object Loss, only affect the offsets instead of the gaussians")
     
