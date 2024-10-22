@@ -192,16 +192,18 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.txt")
         cam_extrinsics = read_extrinsics_text(cameras_extrinsic_file)
         cam_intrinsics = read_intrinsics_text(cameras_intrinsic_file)
-
+    masks_folder = os.path.join(path, 'masks')
+    available_masks = [int(x) for x in os.listdir(masks_folder)] # we only take those frames which have available masks
     reading_dir = "images" if images == None else images
     cam_infos_unsorted = readColmapCameras(cam_extrinsics=cam_extrinsics, cam_intrinsics=cam_intrinsics,
-                                           images_folder=os.path.join(path, reading_dir), masks_folder=os.path.join(path, 'masks'), mask_id=mask_id)
+                                           images_folder=os.path.join(path, reading_dir), masks_folder=masks_folder, mask_id=mask_id)
     cam_infos = sorted(cam_infos_unsorted.copy(), key = lambda x : x.image_name)
-    llffhold = len(cam_infos)/args_dict['num_cams']
+    # llffhold = len(cam_infos)/args_dict['num_cams']
     print('args.eval', args_dict['eval'])
     if eval and not args_dict['render_only']:
-        train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold == 0]
-        test_cam_infos = [c for idx, c in enumerate(cam_infos) if idx % llffhold != 0]
+        # available_masks and cam_infos are offset by 1
+        train_cam_infos = [c for idx, c in enumerate(cam_infos) if idx + 1 in available_masks]
+        test_cam_infos = [] #[c for idx, c in enumerate(cam_infos) if idx % llffhold != 0]
     else:
         train_cam_infos = cam_infos
         test_cam_infos = []
