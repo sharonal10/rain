@@ -124,7 +124,7 @@ for mask_idx, mask_result in enumerate(auto_masks):
 
 # Propagate from middle to start (reverse)
 video_segments = {}
-for out_frame_idx, out_obj_ids, out_mask_logits in predictor.propagate_in_video(inference_state, start=args.middle, end=args.start, reverse=True):
+for out_frame_idx, out_obj_ids, out_mask_logits in predictor.propagate_in_video(inference_state, start_frame_idx=args.middle, max_frame_num_to_track=args.middle-args.start, reverse=True):
     video_segments[out_frame_idx] = {}
     zeros = []
     for i, out_obj_id in enumerate(out_obj_ids):
@@ -135,7 +135,7 @@ for out_frame_idx, out_obj_ids, out_mask_logits in predictor.propagate_in_video(
     print(out_frame_idx, zeros)
 
 # Propagate from middle to end (forward)
-for out_frame_idx, out_obj_ids, out_mask_logits in predictor.propagate_in_video(inference_state, start=args.middle, end=args.end, reverse=False):
+for out_frame_idx, out_obj_ids, out_mask_logits in predictor.propagate_in_video(inference_state, start_frame_idx=args.middle, max_frame_num_to_track=args.end-args.middle, reverse=False):
     video_segments[out_frame_idx] = {}
     zeros = []
     for i, out_obj_id in enumerate(out_obj_ids):

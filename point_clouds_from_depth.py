@@ -25,7 +25,7 @@ def main(args):
     depth_array = np.mean(depth_array, axis=2) # it's rgb for some reason
     masked_color_array = color_array * mask_array[:, :, np.newaxis]
     print(depth_array.shape, mask_array.shape)
-    masked_depth_array = depth_array * mask_array
+    masked_depth_array = depth_array * mask_array # NOTE: TODO: depth * mask seems to be black
     import pdb; pdb.set_trace()
     color_image = o3d.geometry.Image(masked_color_array.astype(np.uint8))
     depth_image = o3d.geometry.Image(masked_depth_array.astype(np.uint16))
