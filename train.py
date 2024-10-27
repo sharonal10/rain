@@ -14,6 +14,7 @@ from utils.image_utils import psnr
 from argparse import ArgumentParser, Namespace
 from arguments import ModelParams, PipelineParams, OptimizationParams
 from lpipsPyTorch import lpips
+from PIL import Image
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True
@@ -110,6 +111,15 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
 
         gt_image = viewpoint_cam.original_image.cuda()
+        if iteration % 1000 == 0 or iteration < 4:
+            to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
+            to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+            to_save_image.save(os.path.join(scene.model_path, f'whole_{iteration}.png'))
+
+            to_save_image = gt_image.detach().permute(1, 2, 0).cpu().numpy()
+            to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+            to_save_image.save(os.path.join(scene.model_path, f'gt_{iteration}.png'))
+
         Ll1 = l1_loss(image, gt_image)
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(image, gt_image))
         loss.backward()
