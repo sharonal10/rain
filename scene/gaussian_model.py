@@ -230,7 +230,7 @@ class GaussianModel:
         xyz = np.stack((np.asarray(plydata.elements[0]["x"]),
                         np.asarray(plydata.elements[0]["y"]),
                         np.asarray(plydata.elements[0]["z"])),  axis=1)
-        centroid = xyz.mean(dim=0)
+        centroid = xyz.mean(axis=0)
         xyz = xyz-centroid+np.array([0, 1, 1])
         opacities = np.asarray(plydata.elements[0]["opacity"])[..., np.newaxis]
 
