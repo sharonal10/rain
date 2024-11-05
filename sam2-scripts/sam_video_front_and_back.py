@@ -30,6 +30,7 @@ def show_anns(anns, borders=True):
     return img
 
 # Parse arguments for input, output, and frame ranges
+# python sam2-scripts/sam_video_front_and_back.py --input_dir sugar/imgs/11_04_tablechairs/images --output_dir sam2-scripts/11_04_tablechairs --start 0 --middle 33 --end 122
 parser = argparse.ArgumentParser(description="SAM2 Video Segmentation and Mask Generation")
 parser.add_argument("--input_dir", type=str, required=True, help="Directory containing video frames")
 parser.add_argument("--output_dir", type=str, required=True, help="Directory to save binary masks and results")
@@ -89,7 +90,20 @@ first_frame_path = os.path.join(video_path, frame_names[args.middle])
 first_frame = Image.open(first_frame_path)
 first_frame = np.array(first_frame.convert("RGB"))
 
-mask_generator = SAM2AutomaticMaskGenerator(sam2)
+# mask_generator = SAM2AutomaticMaskGenerator(sam2)
+mask_generator = SAM2AutomaticMaskGenerator(
+        model=sam2,
+        points_per_side=64,
+        points_per_batch=128,
+        pred_iou_thresh=0.7,
+        stability_score_thresh=0.92,
+        stability_score_offset=0.7,
+        crop_n_layers=1,
+        box_nms_thresh=0.7,
+        crop_n_points_downscale_factor=2,
+        min_mask_region_area=100,
+        use_m2m=True,
+    )
 auto_masks = mask_generator.generate(first_frame)
 print("Number of auto-masks:", len(auto_masks))
 
@@ -101,6 +115,8 @@ if new_img is not None:
     output_path = os.path.join(binary_mask_output_dir, 'middle.jpg')
     plt.imsave(output_path, new_img)
 plt.close()
+
+print('middle done')
 
 # Initialize video predictor
 predictor = build_sam2_video_predictor(model_cfg, sam2_checkpoint, device=device)
