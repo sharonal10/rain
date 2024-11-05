@@ -313,6 +313,7 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=
             storePly(ply_path, xyz, rgb)
     else:
         ply_path = os.path.join(path, "result.ply")
+        print(ply_path)
     try:
         pcd = fetchPly(ply_path)
     except:
