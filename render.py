@@ -55,30 +55,30 @@ def render_set(model_path, name, iteration, views, gaussians_list, pipeline, bac
 
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
         rendering = render_multi(view, gaussians_list, pipeline, background)
-        rendered_image, rendered_depth = rendering["render"], rendering["depth"]
+        rendered_image = rendering["render"]
         gt = view.original_image[0:3, :, :]
-        render_depth = rendered_depth.clone()
-        rendered_depth = (rendered_depth-rendered_depth.min()) / (rendered_depth.max() - rendered_depth.min() + 1e-6)
+        # render_depth = rendered_depth.clone()
+        # rendered_depth = (rendered_depth-rendered_depth.min()) / (rendered_depth.max() - rendered_depth.min() + 1e-6)
         
         
-        render_depth = render_depth.permute(1, 2, 0).squeeze()
-        normalizer = mpl.colors.Normalize(vmin=render_depth.min(), vmax=np.percentile(render_depth.cpu().numpy(), 95))
+        # render_depth = render_depth.permute(1, 2, 0).squeeze()
+        # normalizer = mpl.colors.Normalize(vmin=render_depth.min(), vmax=np.percentile(render_depth.cpu().numpy(), 95))
         
-        inferno_mapper = cm.ScalarMappable(norm=normalizer,cmap="inferno")
-        colormap_inferno = (inferno_mapper.to_rgba(render_depth.cpu().numpy())*255).astype('uint8') 
+        # inferno_mapper = cm.ScalarMappable(norm=normalizer,cmap="inferno")
+        # colormap_inferno = (inferno_mapper.to_rgba(render_depth.cpu().numpy())*255).astype('uint8') 
         
-        imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + f"_depth_inferno_{render_source}_{iteration}.png"), colormap_inferno)
+        # imageio.imwrite(os.path.join(render_path, '{0:05d}'.format(idx) + f"_depth_inferno_{render_source}_{iteration}.png"), colormap_inferno)
         
         torchvision.utils.save_image(rendered_image, os.path.join(render_path, '{0:05d}'.format(idx) + f"_{render_source}_{iteration}.png"))
         # torchvision.utils.save_image(rendered_depth, os.path.join(render_path, '{0:05d}'.format(idx) + "_depth.png"))
         #torchvision.utils.save_image(gt, os.path.join(gts_path, '{0:05d}'.format(idx) + ".png"))
 
     rgb_files = get_image_files(render_path, f"_{render_source}_{iteration}")
-    depth_files = get_image_files(render_path, f"_depth_inferno_{render_source}_{iteration}")
+    # depth_files = get_image_files(render_path, f"_depth_inferno_{render_source}_{iteration}")
     
     fps = 10
     create_video(rgb_files, f"videos/{os.path.basename(model_path)}_{render_source}_{iteration}_rgb.mp4")
-    create_video(depth_files, f"videos/{os.path.basename(model_path)}_{render_source}_{iteration}_depth.mp4")
+    # create_video(depth_files, f"videos/{os.path.basename(model_path)}_{render_source}_{iteration}_depth.mp4")
 
     shutil.rmtree(render_path)
 
