@@ -3,7 +3,7 @@ from scene import Scene
 import os
 from tqdm import tqdm
 from os import makedirs
-from gaussian_renderer import render
+from gaussian_renderer import render, render_multi
 import torchvision
 from utils.general_utils import safe_state
 from argparse import ArgumentParser
@@ -45,7 +45,7 @@ def create_video(image_files, output_video, fps=10):
     video.release()
 
 
-def render_set(model_path, name, iteration, views, gaussians, pipeline, background, render_source):
+def render_set(model_path, name, iteration, views, gaussians_list, pipeline, background, render_source):
     # render_path = os.path.join(model_path, name, "ours_{}".format(iteration), "renders")
     render_path = os.path.join(model_path, f"to_delete_{render_source}_{iteration}")
     # gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), "gt")
@@ -54,7 +54,7 @@ def render_set(model_path, name, iteration, views, gaussians, pipeline, backgrou
     # makedirs(gts_path, exist_ok=True)
 
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
-        rendering = render(view, gaussians, pipeline, background)
+        rendering = render_multi(view, gaussians_list, pipeline, background)
         rendered_image, rendered_depth = rendering["render"], rendering["depth"]
         gt = view.original_image[0:3, :, :]
         render_depth = rendered_depth.clone()
