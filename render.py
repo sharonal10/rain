@@ -92,19 +92,27 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
         else:
             divide_ratio = 0.8
         print(f"Set divide_ratio to {divide_ratio}")
-        gaussians = GaussianModel(dataset.sh_degree, divide_ratio)
-        scene = Scene(dataset, gaussians, load_iteration=iteration, args_dict=args_dict, mask_id=0, render_source=args_dict['render_source'])
+        gaussians_list = []
+        scene_list = []
+        for filename in os.listdir(args_dict['render_source']):
+            if '.ply' not in filename:
+                continue
+            file_path = os.path.join(args_dict['render_source'], filename)
+            gaussians = GaussianModel(dataset.sh_degree, divide_ratio)
+            scene = Scene(dataset, gaussians, load_iteration=iteration, args_dict=args_dict, mask_id=0, render_source=file_path)
+            gaussians_list.append(gaussians)
+            scene_list.append(scene)
 
         bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
-        trimmed_render_source = os.path.splitext(os.path.basename(args_dict['render_source']))[0]
+        # trimmed_render_source = os.path.basename(os.path.dirname(args_dict['render_source']))
 
         if not skip_train:
-             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, trimmed_render_source)
+             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians_list, pipeline, background, "")
 
         if not skip_test:
-             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, trimmed_render_source)
+             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians_list, pipeline, background, "")
 
 if __name__ == "__main__":
     parser = ArgumentParser(description="Testing script parameters")
@@ -117,7 +125,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_cams", default=10, type=int)
     parser.add_argument("--ours_new", action="store_true", help="Use our initialisation version 2")
     parser.add_argument("--ours", action="store_true", help="Use our initialisation version 2")
-    parser.add_argument("--render_source", default="point_cloud")
+    parser.add_argument("--render_source", default="dir")
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
 
