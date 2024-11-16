@@ -6,12 +6,34 @@ from submodules.diff_gaussian_rasterization.diff_gaussian_rasterization import G
 from scene.gaussian_model import GaussianModel
 from utils.sh_utils import eval_sh
 
+def rotate_around_z(xyz, angle_degrees, centroid):
+    # Step 1: Translate to origin
+    xyz_centered = xyz - centroid
+
+    # Step 2: Apply rotation
+    angle_radians = torch.deg2rad(torch.tensor(angle_degrees, device=xyz.device))
+    cos_angle = torch.cos(angle_radians)
+    sin_angle = torch.sin(angle_radians)
+    rotation_matrix = torch.tensor([
+        [cos_angle, -sin_angle, 0.0],
+        [sin_angle, cos_angle, 0.0],
+        [0.0, 0.0, 1.0]
+    ], device=xyz.device)
+    xyz_rotated = torch.matmul(xyz_centered, rotation_matrix.T)
+
+    # Step 3: Translate back to original centroid
+    xyz_rotated = xyz_rotated + centroid
+    return xyz_rotated, rotation_matrix
+
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, low_pass = 0.3, center_id=None):    
     if center_id is not None:
         xyz = pc.get_xyz + pc.centers[center_id]
     else:
         xyz = pc.get_xyz
     centroid = xyz.mean(dim=0)
+
+    xyz, rotation_matrix = rotate_around_z(xyz, 90, centroid)
+
     # center to origin then scale
     xyz = ((xyz - centroid) * pc.scale) + centroid
 
@@ -55,6 +77,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     else:
         scales = pc.get_scaling
         rotations = pc.get_rotation
+        if rotations is not None:
+            rotations = torch.matmul(rotation_matrix, rotations)
 
     shs = None
     colors_precomp = None
