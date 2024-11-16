@@ -6,6 +6,52 @@ from submodules.diff_gaussian_rasterization.diff_gaussian_rasterization import G
 from scene.gaussian_model import GaussianModel
 from utils.sh_utils import eval_sh
 
+def rotation_matrix_to_quaternion(rotation_matrix):
+    """Convert a 3x3 rotation matrix to a quaternion."""
+    R = rotation_matrix
+    trace = R[0, 0] + R[1, 1] + R[2, 2]
+    if trace > 0:
+        s = torch.sqrt(trace + 1.0) * 2
+        qw = 0.25 * s
+        qx = (R[2, 1] - R[1, 2]) / s
+        qy = (R[0, 2] - R[2, 0]) / s
+        qz = (R[1, 0] - R[0, 1]) / s
+    elif (R[0, 0] > R[1, 1]) and (R[0, 0] > R[2, 2]):
+        s = torch.sqrt(1.0 + R[0, 0] - R[1, 1] - R[2, 2]) * 2
+        qw = (R[2, 1] - R[1, 2]) / s
+        qx = 0.25 * s
+        qy = (R[0, 1] + R[1, 0]) / s
+        qz = (R[0, 2] + R[2, 0]) / s
+    elif R[1, 1] > R[2, 2]:
+        s = torch.sqrt(1.0 + R[1, 1] - R[0, 0] - R[2, 2]) * 2
+        qw = (R[0, 2] - R[2, 0]) / s
+        qx = (R[0, 1] + R[1, 0]) / s
+        qy = 0.25 * s
+        qz = (R[1, 2] + R[2, 1]) / s
+    else:
+        s = torch.sqrt(1.0 + R[2, 2] - R[0, 0] - R[1, 1]) * 2
+        qw = (R[1, 0] - R[0, 1]) / s
+        qx = (R[0, 2] + R[2, 0]) / s
+        qy = (R[1, 2] + R[2, 1]) / s
+        qz = 0.25 * s
+    return torch.tensor([qw, qx, qy, qz], device=rotation_matrix.device)
+
+def rotate_quaternions(quaternions, rotation_quaternion):
+    """Rotate a batch of quaternions by another quaternion."""
+    q1 = rotation_quaternion.unsqueeze(0).expand_as(quaternions)
+    q2 = quaternions
+
+    # Hamilton product of two quaternions q1 and q2
+    w1, x1, y1, z1 = q1.unbind(-1)
+    w2, x2, y2, z2 = q2.unbind(-1)
+
+    new_w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
+    new_x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
+    new_y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
+    new_z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+
+    return torch.stack((new_w, new_x, new_y, new_z), dim=-1)
+
 def rotate_around_z(xyz, angle_degrees, centroid):
     # Step 1: Translate to origin
     xyz_centered = xyz - centroid
@@ -38,6 +84,9 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     xyz = ((xyz - centroid) * pc.scale) + centroid
 
     screenspace_points = torch.zeros_like(xyz, dtype=xyz.dtype, requires_grad=True, device="cuda") + 0
+
+    rotation_quaternion = rotation_matrix_to_quaternion(rotation_matrix)
+
     try:
         screenspace_points.retain_grad()
     except:
@@ -78,7 +127,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         scales = pc.get_scaling
         rotations = pc.get_rotation
         if rotations is not None:
-            rotations = torch.matmul(rotation_matrix, rotations)
+            rotations = rotate_quaternions(rotations, rotation_quaternion)
 
     shs = None
     colors_precomp = None
