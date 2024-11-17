@@ -316,7 +316,7 @@ class GaussianModel:
         opacities = self._opacity.detach().cpu().numpy()
         scale = (self._scaling + torch.log(self.scale)).detach().cpu().numpy()
         rotation = self.get_rotation # just applies normalize which should be fine
-        rotations = rotate_quaternions(rotations, rotation_quaternion).detach().cpu().numpy()
+        rotation = rotate_quaternions(rotation, rotation_quaternion).detach().cpu().numpy()
 
         dtype_full = [(attribute, 'f4') for attribute in self.construct_list_of_attributes()]
 
