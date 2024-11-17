@@ -5,7 +5,7 @@ from random import randint
 from utils.loss_utils import l1_loss, ssim
 from gaussian_renderer import render, network_gui, render_multi
 import sys
-from scene import Scene, GaussianModel
+from scene import Scene, GaussianModel, rotation_matrix_to_quaternion, rotate_quaternions, rotate_around_z
 from scene.dataset_readers import read_box
 from utils.general_utils import safe_state
 import uuid
@@ -19,7 +19,6 @@ from lpipsPyTorch import lpips
 from plyfile import PlyData, PlyElement
 from PIL import Image
 from utils.general_utils import PILtoTorch
-from gaussian_renderer import rotation_matrix_to_quaternion, rotate_quaternions, rotate_around_z
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True

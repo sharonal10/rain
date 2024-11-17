@@ -9,7 +9,72 @@ from utils.sh_utils import RGB2SH
 from simple_knn._C import distCUDA2
 from utils.graphics_utils import BasicPointCloud
 from utils.general_utils import strip_symmetric, build_scaling_rotation
-from gaussian_renderer import rotation_matrix_to_quaternion, rotate_quaternions, rotate_around_z
+
+
+def rotation_matrix_to_quaternion(rotation_matrix):
+    """Convert a 3x3 rotation matrix to a quaternion."""
+    R = rotation_matrix
+    trace = R[0, 0] + R[1, 1] + R[2, 2]
+    if trace > 0:
+        s = torch.sqrt(trace + 1.0) * 2
+        qw = 0.25 * s
+        qx = (R[2, 1] - R[1, 2]) / s
+        qy = (R[0, 2] - R[2, 0]) / s
+        qz = (R[1, 0] - R[0, 1]) / s
+    elif (R[0, 0] > R[1, 1]) and (R[0, 0] > R[2, 2]):
+        s = torch.sqrt(1.0 + R[0, 0] - R[1, 1] - R[2, 2]) * 2
+        qw = (R[2, 1] - R[1, 2]) / s
+        qx = 0.25 * s
+        qy = (R[0, 1] + R[1, 0]) / s
+        qz = (R[0, 2] + R[2, 0]) / s
+    elif R[1, 1] > R[2, 2]:
+        s = torch.sqrt(1.0 + R[1, 1] - R[0, 0] - R[2, 2]) * 2
+        qw = (R[0, 2] - R[2, 0]) / s
+        qx = (R[0, 1] + R[1, 0]) / s
+        qy = 0.25 * s
+        qz = (R[1, 2] + R[2, 1]) / s
+    else:
+        s = torch.sqrt(1.0 + R[2, 2] - R[0, 0] - R[1, 1]) * 2
+        qw = (R[1, 0] - R[0, 1]) / s
+        qx = (R[0, 2] + R[2, 0]) / s
+        qy = (R[1, 2] + R[2, 1]) / s
+        qz = 0.25 * s
+    return torch.tensor([qw, qx, qy, qz], device=rotation_matrix.device)
+
+def rotate_quaternions(quaternions, rotation_quaternion):
+    """Rotate a batch of quaternions by another quaternion."""
+    q1 = rotation_quaternion.unsqueeze(0).expand_as(quaternions)
+    q2 = quaternions
+
+    # Hamilton product of two quaternions q1 and q2
+    w1, x1, y1, z1 = q1.unbind(-1)
+    w2, x2, y2, z2 = q2.unbind(-1)
+
+    new_w = w1 * w2 - x1 * x2 - y1 * y2 - z1 * z2
+    new_x = w1 * x2 + x1 * w2 + y1 * z2 - z1 * y2
+    new_y = w1 * y2 - x1 * z2 + y1 * w2 + z1 * x2
+    new_z = w1 * z2 + x1 * y2 - y1 * x2 + z1 * w2
+
+    return torch.stack((new_w, new_x, new_y, new_z), dim=-1)
+
+def rotate_around_z(xyz, angle_degrees, centroid):
+    # Step 1: Translate to origin
+    xyz_centered = xyz - centroid
+
+    # Step 2: Apply rotation
+    angle_radians = torch.deg2rad(torch.tensor(angle_degrees, device=xyz.device))
+    cos_angle = torch.cos(angle_radians)
+    sin_angle = torch.sin(angle_radians)
+    rotation_matrix = torch.tensor([
+        [cos_angle, -sin_angle, 0.0],
+        [sin_angle, cos_angle, 0.0],
+        [0.0, 0.0, 1.0]
+    ], device=xyz.device)
+    xyz_rotated = torch.matmul(xyz_centered, rotation_matrix.T)
+
+    # Step 3: Translate back to original centroid
+    xyz_rotated = xyz_rotated + centroid
+    return xyz_rotated, rotation_matrix
 
 class GaussianModel:
 
