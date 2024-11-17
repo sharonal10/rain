@@ -61,6 +61,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     
     gaussians_list = []
     scene_list = []
+    import pdb; pdb.set_trace()
     assembly_sources = { # hardcode for this experiment
         0: args['input_pcs'][0],
         4: args['input_pcs'][1],
