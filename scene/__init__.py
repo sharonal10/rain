@@ -35,10 +35,9 @@ class Scene:
             assert False, "Could not recognize scene type!"
 
         if not self.loaded_iter:
-            with open(scene_info.ply_path, 'rb') as src_file, open(os.path.join(self.model_path, f"input_{mask_id:03}.ply") , 'wb') as dest_file:
-                dest_file.write(src_file.read())
-
             if os.path.exists(scene_info.ply_path):
+                with open(scene_info.ply_path, 'rb') as src_file, open(os.path.join(self.model_path, f"input_{mask_id:03}.ply") , 'wb') as dest_file:
+                    dest_file.write(src_file.read())
                 os.remove(scene_info.ply_path)
                 print(f"The file {scene_info.ply_path} has been removed successfully.")
             else:
