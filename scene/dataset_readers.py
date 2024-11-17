@@ -181,7 +181,7 @@ def read_box(filename):
 
     return box_center, box_rotation, box_size, num_points
 
-def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=None, custom_ply_path=None):
+def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=None, custom_ply_path=None, assembly_source=None):
     try:
         cameras_extrinsic_file = os.path.join(path, "sparse/0", "images.bin")
         cameras_intrinsic_file = os.path.join(path, "sparse/0", "cameras.bin")
@@ -278,23 +278,26 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=
                 pcd = BasicPointCloud(points=xyz, colors=shs, normals=np.zeros((num_pts, 3)))
                 storePly(ply_path, xyz, SH2RGB(shs) * 255)
     elif not args_dict['render_only'] and args_dict['box_gen']:
-        print('generating point cloud in a box')
-        # box_center = np.array([-0.632, 0.592, 2.72])
-        # box_size = np.array([0.318, 0.478, 0.738])
-        # box_rotation = np.radians([-41.176, -48.239, -37.687])
-        box_path = os.path.join(path, f"sparse/0/{args_dict['box_name']}_{mask_id:03}.txt")
-        print(f'loading box from {box_path}')
-        box_center, box_rotation, box_size, num_points = read_box(box_path)
-
-        points_local = generate_points_in_box(box_size, num_points)
-        xyz = transform_points_local_to_global(points_local, box_center, box_rotation)
-        shs = np.random.random((num_points, 3))
-        if custom_ply_path is not None:
-            ply_path = custom_ply_path
+        if assembly_source:
+            print('skipping box loading due to assembly mode')
         else:
-            ply_path = os.path.join(path, "sparse/0/points3D.ply")
-        print(f'storing in {ply_path}')
-        storePly(ply_path, xyz, SH2RGB(shs) * 255)
+            print('generating point cloud in a box')
+            # box_center = np.array([-0.632, 0.592, 2.72])
+            # box_size = np.array([0.318, 0.478, 0.738])
+            # box_rotation = np.radians([-41.176, -48.239, -37.687])
+            box_path = os.path.join(path, f"sparse/0/{args_dict['box_name']}_{mask_id:03}.txt")
+            print(f'loading box from {box_path}')
+            box_center, box_rotation, box_size, num_points = read_box(box_path)
+
+            points_local = generate_points_in_box(box_size, num_points)
+            xyz = transform_points_local_to_global(points_local, box_center, box_rotation)
+            shs = np.random.random((num_points, 3))
+            if custom_ply_path is not None:
+                ply_path = custom_ply_path
+            else:
+                ply_path = os.path.join(path, "sparse/0/points3D.ply")
+            print(f'storing in {ply_path}')
+            storePly(ply_path, xyz, SH2RGB(shs) * 255)
     elif not args_dict['render_only'] and args_dict['use_orig']:
         if custom_ply_path is not None:
             ply_path = custom_ply_path
