@@ -5,7 +5,8 @@ from random import randint
 from utils.loss_utils import l1_loss, ssim
 from gaussian_renderer import render, network_gui, render_multi
 import sys
-from scene import Scene, GaussianModel, rotation_matrix_to_quaternion, rotate_quaternions, rotate_around_z
+from scene import Scene, GaussianModel
+from scene.gaussian_model import rotation_matrix_to_quaternion, rotate_quaternions, rotate_around_z
 from scene.dataset_readers import read_box
 from utils.general_utils import safe_state
 import uuid
