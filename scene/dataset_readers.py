@@ -280,6 +280,7 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=
     elif not args_dict['render_only'] and args_dict['box_gen']:
         if assembly_source:
             print('skipping box loading due to assembly mode')
+            ply_path = ""
         else:
             print('generating point cloud in a box')
             # box_center = np.array([-0.632, 0.592, 2.72])
