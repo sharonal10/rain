@@ -61,10 +61,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     
     gaussians_list = []
     scene_list = []
-    import pdb; pdb.set_trace()
     assembly_sources = { # hardcode for this experiment
-        0: args['input_pcs'][0],
-        4: args['input_pcs'][1],
+        0: args_dict['input_pcs'][0],
+        4: args_dict['input_pcs'][1],
     }
     for mask_id in [0, 4]: # dresser body + bottom drawer
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
