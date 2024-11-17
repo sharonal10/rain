@@ -19,6 +19,7 @@ from lpipsPyTorch import lpips
 from plyfile import PlyData, PlyElement
 from PIL import Image
 from utils.general_utils import PILtoTorch
+from gaussian_renderer import rotation_matrix_to_quaternion, rotate_quaternions, rotate_around_z
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True
@@ -45,32 +46,32 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     boxes_to_load = [1, 2, 3, 4]
     raw_centers = []
     for box_id in boxes_to_load:
-        box_path = os.path.join(dataset.source_path, f"sparse/0/{args_dict['box_name']}_{box_id:03}.txt")
-        print(f'loading box (center only) from {box_path}')
-        box_center, box_rotation, box_size, num_points = read_box(box_path)
-        raw_centers.append(box_center)
+        # box_path = os.path.join(dataset.source_path, f"sparse/0/{args_dict['box_name']}_{box_id:03}.txt")
+        # print(f'loading box (center only) from {box_path}')
+        # box_center, box_rotation, box_size, num_points = read_box(box_path)
+        # raw_centers.append(box_center)
+        raw_centers.append(np.array([0, 0, 0]))
 
-    processed_centers = []
-    for i in range(3):
-        processed_centers.append(raw_centers[i] - raw_centers[-1])
-    # choose the bottom drawer to be the 'zero' - but still need to center the
-    # loaded gaussians to the bottom drawer's position
-    zero_center = torch.tensor(raw_centers[-1], dtype=torch.float, device="cuda")
+    # processed_centers = []
+    # for i in range(3):
+    #     processed_centers.append(raw_centers[i] - raw_centers[-1])
+    # # choose the bottom drawer to be the 'zero' - but still need to center the
+    # # loaded gaussians to the bottom drawer's position
 
     
     gaussians_list = []
     scene_list = []
     assembly_sources = { # hardcode for this experiment
-        0: os.path.join('output', '10_15-phase_1_sofa', 'point_cloud_0', 'iteration_7000', 'point_cloud.ply'),
-        4: os.path.join('output', '10_15-phase_1_sofa_leg', 'point_cloud_0', 'iteration_7000', 'point_cloud.ply'),
+        0: args['input_pcs'][0],
+        4: args['input_pcs'][1],
     }
     for mask_id in [0, 4]: # dresser body + bottom drawer
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
-        scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, zero_center=(zero_center if mask_id == 4 else None), assembly_source=assembly_sources[mask_id])
+        scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id])
         if mask_id == 0:
-            gaussians.training_setup(opt, []) 
+            gaussians.training_setup(opt, [np.array([0, 0, 0])]) 
         else:
-            gaussians.training_setup(opt, processed_centers) 
+            gaussians.training_setup(opt, raw_centers) 
         gaussians_list.append(gaussians)
         scene_list.append(scene)
     
@@ -159,7 +160,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             else:
                 low_pass = 0.3
                 
-            for center_id in [None] + list(range(len(gaussians.centers))):
+            for center_id in list(range(len(gaussians.centers))):
                 # print('currently', gaussians.id, center_id)
                 render_pkg = render(viewpoint_cam, gaussians, pipe, bg, low_pass = low_pass, center_id=center_id)
                 image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
@@ -237,40 +238,37 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 # save all together
                 point_cloud_path = os.path.join(dataset.model_path, "point_cloud/iteration_{}".format(iteration))
                 os.makedirs(point_cloud_path, exist_ok = True)
-                curr_xyz = gaussians_list[0]._xyz
-                centroid = curr_xyz.mean(dim=0)
-                curr_xyz = ((curr_xyz - centroid) * gaussians_list[0].scale) + centroid
-                xyz = curr_xyz.detach().cpu().numpy()
-                print('shape', xyz.shape)
-                f_dc = gaussians_list[0]._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
-                f_rest = gaussians_list[0]._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
-                opacities = gaussians_list[0]._opacity.detach().cpu().numpy()
-                scale = (gaussians_list[0]._scaling + torch.log(gaussians_list[0].scale)).detach().cpu().numpy()
-                rotation = gaussians_list[0]._rotation.detach().cpu().numpy()
+                for pc in gaussians_list:
+                    xyz = None
+                    f_dc = None
+                    f_rest = None
+                    opacities = None
+                    scale = None
+                    rotation = None
+                    first = True
+                    for i, center in enumerate(pc.centers):
+                        curr = pc.get_xyz + center
+                        centroid = curr.mean(dim=0)
+                        # center to origin then scale
+                        curr, rotation_matrix = rotate_around_z(curr, pc.rot_vars[i], centroid)
+                        rotation_quaternion = rotation_matrix_to_quaternion(rotation_matrix)
+                        curr = ((curr - centroid) * pc.scale) + centroid
+                        if first:
+                            first = False
+                            xyz = curr.detach().cpu().numpy()
+                            f_dc = pc._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
+                            f_rest = pc._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
+                            opacities = pc._opacity.detach().cpu().numpy()
+                            scale = (pc._scaling + torch.log(pc.scale)).detach().cpu().numpy()
+                            rotation = rotate_quaternions(pc.get_rotation, rotation_quaternion).detach().cpu().numpy()
+                        else:
+                            xyz = np.concatenate((xyz, curr.detach().cpu().numpy()), axis=0)
+                            f_dc = np.concatenate((f_dc, pc._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
+                            f_rest = np.concatenate((f_rest, pc._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
+                            opacities = np.concatenate((opacities, pc._opacity.detach().cpu().numpy()), axis=0)
+                            scale = np.concatenate((scale, (pc._scaling + torch.log(pc.scale)).detach().cpu().numpy()), axis=0)
+                            rotation = np.concatenate((rotation, rotate_quaternions(pc.get_rotation, rotation_quaternion).detach().cpu().numpy()), axis=0)
 
-                for gaussians in gaussians_list[1:]:
-                    curr_xyz = gaussians._xyz
-                    centroid = curr_xyz.mean(dim=0)
-                    curr_xyz = ((curr_xyz - centroid) * gaussians.scale) + centroid
-                    xyz = np.concatenate((xyz, curr_xyz.detach().cpu().numpy()), axis=0)
-                    print('shape', xyz.shape)
-                    f_dc = np.concatenate((f_dc, gaussians._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
-                    f_rest = np.concatenate((f_rest, gaussians._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
-                    opacities = np.concatenate((opacities, gaussians._opacity.detach().cpu().numpy()), axis=0)
-                    scale = np.concatenate((scale, (gaussians._scaling + torch.log(gaussians.scale)).detach().cpu().numpy()), axis=0)
-                    rotation = np.concatenate((rotation, gaussians._rotation.detach().cpu().numpy()), axis=0)
-
-                    for center in gaussians.centers:
-                        curr_xyz = gaussians._xyz + center
-                        centroid = curr_xyz.mean(dim=0)
-                        curr_xyz = ((curr_xyz - centroid) * gaussians.scale) + centroid
-                        xyz = np.concatenate((xyz, curr_xyz.detach().cpu().numpy()), axis=0)
-                        print('shape', xyz.shape)
-                        f_dc = np.concatenate((f_dc, gaussians._features_dc.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
-                        f_rest = np.concatenate((f_rest, gaussians._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()), axis=0)
-                        opacities = np.concatenate((opacities, gaussians._opacity.detach().cpu().numpy()), axis=0)
-                        scale = np.concatenate((scale, (gaussians._scaling + torch.log(gaussians.scale)).detach().cpu().numpy()), axis=0)
-                        rotation = np.concatenate((rotation, gaussians._rotation.detach().cpu().numpy()), axis=0)
                 normals = np.zeros_like(xyz)
 
                 dtype_full = [(attribute, 'f4') for attribute in gaussians_list[0].construct_list_of_attributes()]
@@ -387,6 +385,8 @@ if __name__ == "__main__":
     parser.add_argument("--box_gen", action="store_true", help="Use box_gen initialisation")
     parser.add_argument("--box_name", type=str, help="name of the .txt file with box params")
     parser.add_argument("--use_orig", action="store_true", help="Use box_gen initialisation")
+    parser.add_argument("--input_pcs", nargs="+", type=int, required=True, help="paths to point clouds to load")
+    
     # removed for now, will hardcode
     # parser.add_argument('--num_masks', type=int, required=True)
     

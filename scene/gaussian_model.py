@@ -9,6 +9,7 @@ from utils.sh_utils import RGB2SH
 from simple_knn._C import distCUDA2
 from utils.graphics_utils import BasicPointCloud
 from utils.general_utils import strip_symmetric, build_scaling_rotation
+from gaussian_renderer import rotation_matrix_to_quaternion, rotate_quaternions, rotate_around_z
 
 class GaussianModel:
 
@@ -30,7 +31,7 @@ class GaussianModel:
         self.rotation_activation = torch.nn.functional.normalize
 
 
-    def __init__(self, sh_degree : int, divide_ratio : float, mask_id, scale=1.0, assembly=False):
+    def __init__(self, sh_degree : int, divide_ratio : float, mask_id, assembly=False):
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree  
         self._xyz = torch.empty(0)
@@ -48,10 +49,16 @@ class GaussianModel:
         self.setup_functions()
         self.divide_ratio = divide_ratio
 
+        # places that need to be changed when updating centers:
+        # save, save_ply.
+        # render, render_multi.
+        # in the training scripts, the save multi code.
         self.centers = [] # represents the offset applied to create other instances
-        self.scale = torch.tensor(scale).float().cuda() # they should still all be the same scale
+        self.scale = torch.tensor(1.0).float().cuda() # they should still all be the same scale
+        self.rot_vars = [] # all different rotations (in degrees)
         self.center_optimizers = []
         self.scale_optimizer = None
+        self.rot_var_optimizers = []
 
         self.assembly = assembly # if true, enable optim for centers and scale, disable all else
 
@@ -175,6 +182,7 @@ class GaussianModel:
                                                         lr_delay_mult=training_args.position_lr_delay_mult,
                                                         max_steps=training_args.position_lr_max_steps)
         else:
+            # 4 chairs = 4 centers fed in.
             self.scale = nn.Parameter(self.scale.requires_grad_(True))
             l = [
                 {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
@@ -185,6 +193,13 @@ class GaussianModel:
                 self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
                 lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
                 self.center_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
+
+                r_tensor = torch.tensor(0).float().cuda()
+                self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
+                lrv = [{'params': [self.rot_vars[-1]], 'lr': training_args.rotation_lr, "name": "rot_var"},]
+                self.rot_var_optimizers.append(torch.optim.Adam(lrv, lr=0.0, eps=1e-15))
+                
+
             
 
     def update_learning_rate(self, iteration):
@@ -217,7 +232,7 @@ class GaussianModel:
             l.append('rot_{}'.format(i))
         return l
 
-    def save_ply(self, path, center=None):
+    def save_ply(self, path, center, rot_var):
         mkdir_p(os.path.dirname(path))
 
         if center is None:
@@ -225,6 +240,8 @@ class GaussianModel:
         else:
             xyz = self._xyz + center
         centroid = xyz.mean(dim=0)
+        xyz, rotation_matrix = rotate_around_z(xyz, rot_var, centroid)
+        rotation_quaternion = rotation_matrix_to_quaternion(rotation_matrix)
         xyz = ((xyz - centroid) * self.scale) + centroid
         xyz = xyz.detach().cpu().numpy()
 
@@ -233,7 +250,8 @@ class GaussianModel:
         f_rest = self._features_rest.detach().transpose(1, 2).flatten(start_dim=1).contiguous().cpu().numpy()
         opacities = self._opacity.detach().cpu().numpy()
         scale = (self._scaling + torch.log(self.scale)).detach().cpu().numpy()
-        rotation = self._rotation.detach().cpu().numpy()
+        rotation = self.get_rotation # just applies normalize which should be fine
+        rotations = rotate_quaternions(rotations, rotation_quaternion).detach().cpu().numpy()
 
         dtype_full = [(attribute, 'f4') for attribute in self.construct_list_of_attributes()]
 
@@ -248,7 +266,7 @@ class GaussianModel:
         optimizable_tensors = self.replace_tensor_to_optimizer(opacities_new, "opacity")
         self._opacity = optimizable_tensors["opacity"]
 
-    def load_ply(self, path, zero_center=None):
+    def load_ply(self, path):
         plydata = PlyData.read(path)
 
         xyz = np.stack((np.asarray(plydata.elements[0]["x"]),
@@ -282,10 +300,6 @@ class GaussianModel:
         for idx, attr_name in enumerate(rot_names):
             rots[:, idx] = np.asarray(plydata.elements[0][attr_name])
 
-        if zero_center is not None:
-            xyz = torch.tensor(xyz, dtype=torch.float, device="cuda")
-            centroid = xyz.mean(dim=0)
-            xyz = xyz - centroid + zero_center
         if self.assembly:
             self._xyz = torch.tensor(xyz, dtype=torch.float, device="cuda")
             self._features_dc = torch.tensor(features_dc, dtype=torch.float, device="cuda").transpose(1, 2).contiguous()

@@ -75,10 +75,11 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     if center_id is not None:
         xyz = pc.get_xyz + pc.centers[center_id]
     else:
+        assert False, "center_id should never be None for this experiment"
         xyz = pc.get_xyz
     centroid = xyz.mean(dim=0)
 
-    xyz, rotation_matrix = rotate_around_z(xyz, 90, centroid)
+    xyz, rotation_matrix = rotate_around_z(xyz, pc.rot_vars[center_id], centroid)
 
     # center to origin then scale
     xyz = ((xyz - centroid) * pc.scale) + centroid
@@ -126,8 +127,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     else:
         scales = pc.get_scaling
         rotations = pc.get_rotation
-        if rotations is not None:
-            rotations = rotate_quaternions(rotations, rotation_quaternion)
+        rotations = rotate_quaternions(rotations, rotation_quaternion)
 
     shs = None
     colors_precomp = None
@@ -162,16 +162,20 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
 
 def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, low_pass = 0.3):
     xyz = []
+    rotation_quaternions = []
     for pc in gaussians_list:
-        curr = pc.get_xyz
-        centroid = curr.mean(dim=0)
-        # center to origin then scale
-        curr = ((curr - centroid) * pc.scale) + centroid
-        xyz.append(curr)
-        for center in pc.centers:
+        # curr = pc.get_xyz
+        # centroid = curr.mean(dim=0)
+        # # center to origin then scale
+        # curr = ((curr - centroid) * pc.scale) + centroid
+        # xyz.append(curr)
+        for i, center in enumerate(pc.centers):
             curr = pc.get_xyz + center
             centroid = curr.mean(dim=0)
             # center to origin then scale
+            curr, rotation_matrix = rotate_around_z(curr, pc.rot_vars[i], centroid)
+            rotation_quaternion = rotation_matrix_to_quaternion(rotation_matrix)
+            rotation_quaternions.append(rotation_quaternion)
             curr = ((curr - centroid) * pc.scale) + centroid
             xyz.append(curr)
     xyz = torch.cat(xyz, dim=0)
@@ -206,7 +210,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     means2D = screenspace_points
     opacity = []
     for pc in gaussians_list:
-        opacity.append(pc.get_opacity)
+        # opacity.append(pc.get_opacity)
         for center in pc.centers:
             opacity.append(pc.get_opacity)
     opacity = torch.cat(opacity, dim=0)
@@ -220,16 +224,16 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     else:
         scales = []
         for pc in gaussians_list:
-            scales.append(pc.get_scaling)
+            # scales.append(pc.get_scaling)
             for center in pc.centers:
                 scales.append(pc.get_scaling)
         scales = torch.cat(scales, dim=0)
         
         rotations = []
         for pc in gaussians_list:
-            rotations.append(pc.get_rotation)
-            for center in pc.centers:
-                rotations.append(pc.get_rotation)
+            # rotations.append(pc.get_rotation)
+            for i, center in enumerate(pc.centers):
+                rotations.append(rotate_quaternions(pc.get_rotation, rotation_quaternions[i]))
         rotations = torch.cat(rotations, dim=0)
 
     shs = None
@@ -237,7 +241,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     if override_color is None:
         feats = []
         for pc in gaussians_list:
-            feats.append(pc.get_features)
+            # feats.append(pc.get_features)
             for center in pc.centers:
                 feats.append(pc.get_features)
         if pipe.convert_SHs_python:
