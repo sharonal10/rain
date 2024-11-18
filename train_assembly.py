@@ -46,11 +46,11 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     boxes_to_load = [1, 2, 3]
     raw_centers = []
     for box_id in boxes_to_load:
-        # box_path = os.path.join(dataset.source_path, f"sparse/0/{args_dict['box_name']}_{box_id:03}.txt")
-        # print(f'loading box (center only) from {box_path}')
-        # box_center, box_rotation, box_size, num_points = read_box(box_path)
-        # raw_centers.append(box_center)
-        raw_centers.append(np.array([0, 0, 0]))
+        box_path = os.path.join(dataset.source_path, f"sparse/0/{args_dict['box_name']}_{box_id:03}.txt")
+        print(f'loading box (center only) from {box_path}')
+        box_center, box_rotation, box_size, num_points = read_box(box_path)
+        raw_centers.append(box_center)
+        # raw_centers.append(np.array([0, 0, 0]))
 
     # processed_centers = []
     # for i in range(3):
