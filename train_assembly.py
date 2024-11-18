@@ -43,7 +43,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     # gather centers (hardcoded for now)
     # reference center is bottom drawer. coordinates for each center is the offset between each drawer and the bottom drawer
     # render_multi assumes that we at least want to render it once without applying an offset
-    boxes_to_load = [1, 2, 3, 4]
+    boxes_to_load = [1, 2, 3]
     raw_centers = []
     for box_id in boxes_to_load:
         # box_path = os.path.join(dataset.source_path, f"sparse/0/{args_dict['box_name']}_{box_id:03}.txt")
@@ -63,9 +63,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     scene_list = []
     assembly_sources = { # hardcode for this experiment
         0: args_dict['input_pcs'][0],
-        4: args_dict['input_pcs'][1],
+        3: args_dict['input_pcs'][1],
     }
-    for mask_id in [0, 4]: # dresser body + bottom drawer
+    for mask_id in [0, 3]: # dresser body + bottom drawer
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id])
         if mask_id == 0:
