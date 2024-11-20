@@ -112,12 +112,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             gaussians = gaussians_list[sub_iter]
             scene = scene_list[sub_iter]
             viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
-            if viewpoint_cam.mask.cuda().sum() < 5:
-                if (iteration in saving_iterations):
-                    with torch.no_grad():
-                        print("\n[ITER {}] Saving Gaussians".format(iteration))
-                        scene.save(iteration)
-                continue
             if network_gui.conn == None:
                 network_gui.try_connect()
             while network_gui.conn != None:
@@ -168,6 +162,12 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 low_pass = 0.3
                 
             for center_id in list(range(len(gaussians.centers))):
+                if viewpoint_cam.masks[center_id].cuda().sum() < 5:
+                    if (iteration in saving_iterations):
+                        with torch.no_grad():
+                            print("\n[ITER {}] Saving Gaussians".format(iteration))
+                            scene.save(iteration, center_id)
+                    continue
                 render_pkg = render(viewpoint_cam, gaussians, pipe, bg, low_pass = low_pass, center_id=center_id)
                 image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
 
@@ -217,7 +217,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
                     print("\n[ITER {}] Saving Gaussians".format(iteration))
-                    scene.save(iteration)
+                    scene.save(iteration, center_id)
 
                 if iteration < opt.densify_until_iter:       
                     gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])

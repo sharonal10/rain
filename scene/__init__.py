@@ -72,13 +72,11 @@ class Scene:
         else:
             self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent)
 
-    def save(self, iteration):
+    def save(self, iteration, center_id):
         assert self.gaussians.centers, "this branch is for train_assembly and assumes all items have centers"
-
-        for i, center in enumerate(self.gaussians.centers):
-            rot_var = self.gaussians.rot_vars[i]
-            point_cloud_path = os.path.join(self.model_path, "point_cloud_{}_{}/iteration_{}".format(self.mask_id, i, iteration))
-            self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud.ply"), center, rot_var)
+        rot_var = self.gaussians.rot_vars[center_id]
+        point_cloud_path = os.path.join(self.model_path, "point_cloud_{}_{}/iteration_{}".format(self.mask_id, center_id, iteration))
+        self.gaussians.save_ply(os.path.join(point_cloud_path, "point_cloud.ply"), self.gaussians.centers[center_id], rot_var)
 
     def getTrainCameras(self, scale=1.0):
         return self.train_cameras[scale]
