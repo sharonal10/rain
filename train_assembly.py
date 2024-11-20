@@ -180,10 +180,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     to_save_image = gt_image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'gt_{sub_iter}_{center_id}_{iteration}.png'))
-
-                    import pdb; pdb.set_trace()
-
-                    to_save_image = mask.detach()[0, 0, :].permute(1, 2, 0).cpu().numpy()
+                    
+                    to_save_image = mask.expand(3, -1, -1).detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'mask_{sub_iter}_{center_id}_{iteration}.png'))
                 
