@@ -172,7 +172,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 # masked_image = image*mask
                 masked_gt_image = gt_image*mask
 
-                if iteration % 1000 == 0 or iteration < 4:
+                if iteration % 1000 == 0 or iteration < 4 or iteration == 50:
                     to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'part_{sub_iter}_{center_id}_{iteration}.png'))
@@ -180,7 +180,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     to_save_image = gt_image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'gt_{sub_iter}_{center_id}_{iteration}.png'))
-                    
+
                     to_save_image = mask.expand(3, -1, -1).detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'mask_{sub_iter}_{center_id}_{iteration}.png'))
@@ -232,11 +232,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass)
         image = render_pkg["render"]
 
-        if iteration % 1000 == 0 or iteration < 4:
-            to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
-            to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-            to_save_image.save(os.path.join(scene.model_path, f'whole_{iteration}.png'))
-
         gt_image = viewpoint_cam.original_image.cuda()
 
         mask = Image.open(os.path.join(dataset.source_path, 'full_masks', f'{viewpoint_cam.image_name}.png'))
@@ -245,6 +240,19 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         masked_image = image
         # masked_image = image*mask
         masked_gt_image = gt_image*mask
+
+        if iteration % 1000 == 0 or iteration < 4 or iteration == 50:
+            to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
+            to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+            to_save_image.save(os.path.join(scene.model_path, f'whole_{iteration}.png'))
+            
+            to_save_image = gt_image.detach().permute(1, 2, 0).cpu().numpy()
+            to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+            to_save_image.save(os.path.join(scene.model_path, f'gt_whole_{iteration}.png'))
+
+            to_save_image = mask.expand(3, -1, -1).detach().permute(1, 2, 0).cpu().numpy()
+            to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+            to_save_image.save(os.path.join(scene.model_path, f'mask_whole_{iteration}.png'))
 
         # assert False
         Ll1 = l1_loss(masked_image, masked_gt_image)
