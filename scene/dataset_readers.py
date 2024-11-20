@@ -23,7 +23,7 @@ class CameraInfo(NamedTuple):
     image_name: str
     width: int
     height: int
-    mask: list
+    masks: list
 
 
 class SceneInfo(NamedTuple):
