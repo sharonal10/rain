@@ -162,7 +162,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 low_pass = 0.3
                 
             for center_id in list(range(len(gaussians.centers))):
-                import pdb; pdb.set_trace()
                 if viewpoint_cam.masks[center_id].cuda().sum() < 5:
                     if (iteration in saving_iterations):
                         with torch.no_grad():
