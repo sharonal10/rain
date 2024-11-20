@@ -32,7 +32,7 @@ class Camera(nn.Module):
         # if gt_alpha_mask is not None:
         #     self.original_image *= gt_alpha_mask.to(self.data_device)
         # else:
-        self.mask = gt_alpha_masks
+        self.masks = gt_alpha_masks
         self.original_image *= torch.ones((1, self.image_height, self.image_width), device=self.data_device)
 
         self.zfar = 100.0
