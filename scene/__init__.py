@@ -11,7 +11,7 @@ class Scene:
 
     gaussians : GaussianModel
 
-    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, resolution_scales=[1.0], args_dict=None, mask_id=None, render_source=None, assembly_source=None):
+    def __init__(self, args : ModelParams, gaussians : GaussianModel, load_iteration=None, resolution_scales=[1.0], args_dict=None, mask_id=None, render_source=None, assembly_source=None, sam_mask_to_load=None):
         self.model_path = args.model_path
         self.loaded_iter = None
         self.gaussians = gaussians
@@ -27,7 +27,7 @@ class Scene:
         self.train_cameras = {}
         self.test_cameras = {}
         if os.path.exists(os.path.join(args.source_path, "sparse")):
-            scene_info = sceneLoadTypeCallbacks["Colmap"](args.source_path, args.images, args.eval, args_dict=args_dict, mask_id=mask_id, custom_ply_path=os.path.join(self.model_path, 'points3D.ply'), assembly_source=assembly_source)
+            scene_info = sceneLoadTypeCallbacks["Colmap"](args.source_path, args.images, args.eval, args_dict=args_dict, mask_id=mask_id, custom_ply_path=os.path.join(self.model_path, 'points3D.ply'), assembly_source=assembly_source, sam_mask_to_load=sam_mask_to_load)
         # elif os.path.exists(os.path.join(args.source_path, "transforms_train.json")):
         #     print("Found transforms_train.json file, assuming Blender data set!")
         #     scene_info = sceneLoadTypeCallbacks["Blender"](args.source_path, args.white_background, args.eval)

@@ -67,9 +67,14 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         0: args_dict['input_pcs'][0],
         3: args_dict['input_pcs'][1],
     }
+
+    sam_mask_to_load = {
+        0: [0],
+        3: [1, 2, 3],    
+    }
     for mask_id in [0, 3]: # dresser body + bottom drawer
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
-        scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id])
+        scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load)
         if mask_id == 0:
             gaussians.training_setup(opt, [np.array([0, 0, 0])]) 
         else:
@@ -167,7 +172,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
 
                 gt_image = viewpoint_cam.original_image.cuda()
-                mask = viewpoint_cam.mask.cuda()
+                mask = viewpoint_cam.masks[center_id].cuda()
                 masked_image = image
                 # masked_image = image*mask
                 masked_gt_image = gt_image*mask
@@ -177,7 +182,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'part_{sub_iter}_{center_id}_{iteration}.png'))
 
-                    to_save_image = gt_image.detach().permute(1, 2, 0).cpu().numpy()
+                    to_save_image = masked_gt_image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'gt_{sub_iter}_{center_id}_{iteration}.png'))
 
@@ -246,7 +251,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
             to_save_image.save(os.path.join(scene.model_path, f'whole_{iteration}.png'))
             
-            to_save_image = gt_image.detach().permute(1, 2, 0).cpu().numpy()
+            to_save_image = masked_gt_image.detach().permute(1, 2, 0).cpu().numpy()
             to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
             to_save_image.save(os.path.join(scene.model_path, f'gt_whole_{iteration}.png'))
 
