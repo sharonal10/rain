@@ -176,35 +176,41 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
                 iter_end.record()
 
-                with torch.no_grad():
-                    ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
-                    if iteration % 10 == 0:
-                        progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}", "num_gaussians" : f"{gaussians.get_xyz.shape[0]}"})
-                        progress_bar.update(5)
-                    if iteration == opt.iterations:
-                        progress_bar.close()
+            with torch.no_grad():
+                ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
+                if iteration % 10 == 0:
+                    progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}", "num_gaussians" : f"{gaussians.get_xyz.shape[0]}"})
+                    progress_bar.update(5)
+                if iteration == opt.iterations:
+                    progress_bar.close()
 
-                    if iteration < opt.iterations:
-                        gaussians.optimizer.step()
-                        gaussians.optimizer.zero_grad(set_to_none = True)
-                    
-                    training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
-                    if (iteration in saving_iterations):
-                        print("\n[ITER {}] Saving Gaussians".format(iteration))
-                        scene.save(iteration)
+                if iteration < opt.iterations:
+                    gaussians.scale_optimizer.step()
+                    gaussians.scale_optimizer.zero_grad(set_to_none = True)
+                    for c_opt in gaussians.center_optimizers:
+                        c_opt.step()
+                        c_opt.zero_grad(set_to_none = True)
+                    for r_opt in gaussians.rot_var_optimizers:
+                        r_opt.step()
+                        r_opt.zero_grad(set_to_none = True)
+                
+                training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
+                if (iteration in saving_iterations):
+                    print("\n[ITER {}] Saving Gaussians".format(iteration))
+                    scene.save(iteration)
 
-                    if iteration < opt.densify_until_iter:       
-                        gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
-                        gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
+                if iteration < opt.densify_until_iter:       
+                    gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
+                    gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
 
-                        if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
-                            size_threshold = 20 if iteration > opt.opacity_reset_interval else None
-                            abe_split = True if iteration <= args_dict['warmup_iter'] else False
-                            
-                            gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold, N=2, abe_split=abe_split)         
+                    if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
+                        size_threshold = 20 if iteration > opt.opacity_reset_interval else None
+                        abe_split = True if iteration <= args_dict['warmup_iter'] else False
                         
-                        if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
-                            gaussians.reset_opacity()
+                        gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold, N=2, abe_split=abe_split)         
+                    
+                    if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
+                        gaussians.reset_opacity()
 
         # also backprop for all, assuming bg, pipe etc are the same
 
@@ -250,9 +256,13 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     for c_opt in gaussians.center_optimizers:
                         c_opt.step()
                         c_opt.zero_grad(set_to_none = True)
+                    for r_opt in gaussians.rot_var_optimizers:
+                        r_opt.step()
+                        r_opt.zero_grad(set_to_none = True)
                     print('--')
                     print(sub_iter)
                     print('scale', gaussians.scale)
+                    print('rot', gaussians.rot_vars)
 
                 if (iteration in checkpoint_iterations):
                     print("\n[ITER {}] Saving Checkpoint".format(iteration))
