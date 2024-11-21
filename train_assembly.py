@@ -210,6 +210,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     # for c_opt in gaussians.center_optimizers:
                     #     c_opt.step()
                     #     c_opt.zero_grad(set_to_none = True)
+                    for ri, r in enumerate(gaussians.rot_vars):
+                        print(ri, r.grad)
                     for r_opt in gaussians.rot_var_optimizers:
                         print('rot')
                         r_opt.step()

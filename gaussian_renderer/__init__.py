@@ -62,7 +62,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     else:
         scales = pc.get_scaling
         rotations = pc.get_rotation
-        rotations = rotate_quaternions(rotations * pc.rot_vars[center_id], rotation_quaternion)
+        rotations = rotate_quaternions(rotations, rotation_quaternion)
 
     shs = None
     colors_precomp = None

@@ -259,7 +259,9 @@ class GaussianModel:
                 lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
                 self.center_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
 
-                r_tensor = torch.tensor(1.0).float().cuda()
+                r_tensor = torch.tensor(90.0).float().cuda()
+                print(training_args.rotation_lr)
+                assert training_args.rotation_lr != 0
                 self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
                 lrv = [{'params': [self.rot_vars[-1]], 'lr': training_args.rotation_lr, "name": "rot_var"},]
                 self.rot_var_optimizers.append(torch.optim.Adam(lrv, lr=0.0, eps=1e-15))
