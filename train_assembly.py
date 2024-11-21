@@ -205,12 +205,13 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.close()
 
                 if iteration < opt.iterations:
-                    gaussians.scale_optimizer.step()
-                    gaussians.scale_optimizer.zero_grad(set_to_none = True)
-                    for c_opt in gaussians.center_optimizers:
-                        c_opt.step()
-                        c_opt.zero_grad(set_to_none = True)
+                    # gaussians.scale_optimizer.step()
+                    # gaussians.scale_optimizer.zero_grad(set_to_none = True)
+                    # for c_opt in gaussians.center_optimizers:
+                    #     c_opt.step()
+                    #     c_opt.zero_grad(set_to_none = True)
                     for r_opt in gaussians.rot_var_optimizers:
+                        print('rot')
                         r_opt.step()
                         r_opt.zero_grad(set_to_none = True)
                 
@@ -279,12 +280,13 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 
 
                 if iteration < opt.iterations:
-                    gaussians.scale_optimizer.step()
-                    gaussians.scale_optimizer.zero_grad(set_to_none = True)
-                    for c_opt in gaussians.center_optimizers:
-                        c_opt.step()
-                        c_opt.zero_grad(set_to_none = True)
+                    # gaussians.scale_optimizer.step()
+                    # gaussians.scale_optimizer.zero_grad(set_to_none = True)
+                    # for c_opt in gaussians.center_optimizers:
+                    #     c_opt.step()
+                    #     c_opt.zero_grad(set_to_none = True)
                     for r_opt in gaussians.rot_var_optimizers:
+                        print('rot whole')
                         r_opt.step()
                         r_opt.zero_grad(set_to_none = True)
                     print('--')
