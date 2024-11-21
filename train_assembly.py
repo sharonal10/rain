@@ -220,18 +220,18 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     print("\n[ITER {}] Saving Gaussians".format(iteration))
                     scene.save(iteration, center_id)
 
-                if iteration < opt.densify_until_iter:       
-                    gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
-                    gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
+                # if iteration < opt.densify_until_iter:       
+                #     gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
+                #     gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
 
-                    if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
-                        size_threshold = 20 if iteration > opt.opacity_reset_interval else None
-                        abe_split = True if iteration <= args_dict['warmup_iter'] else False
+                #     if iteration > opt.densify_from_iter and iteration % opt.densification_interval == 0:
+                #         size_threshold = 20 if iteration > opt.opacity_reset_interval else None
+                #         abe_split = True if iteration <= args_dict['warmup_iter'] else False
                         
-                        gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold, N=2, abe_split=abe_split)         
+                #         gaussians.densify_and_prune(opt.densify_grad_threshold, 0.005, scene.cameras_extent, size_threshold, N=2, abe_split=abe_split)         
                     
-                    if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
-                        gaussians.reset_opacity()
+                #     if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
+                #         gaussians.reset_opacity()
 
         # also backprop for all, assuming bg, pipe etc are the same
 
