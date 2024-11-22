@@ -62,14 +62,14 @@ def rotate_around_z(xyz, angle_degrees, centroid):
     xyz_centered = xyz - centroid
 
     # Step 2: Apply rotation
-    angle_radians = torch.deg2rad(torch.tensor(angle_degrees, device=xyz.device))
+    angle_radians = torch.deg2rad(angle_degrees)
     cos_angle = torch.cos(angle_radians)
     sin_angle = torch.sin(angle_radians)
-    rotation_matrix = torch.tensor([
-        [cos_angle, -sin_angle, 0.0],
-        [sin_angle, cos_angle, 0.0],
-        [0.0, 0.0, 1.0]
-    ], device=xyz.device)
+    rotation_matrix = torch.stack([
+    torch.stack([cos_angle, -sin_angle, torch.tensor(0.0, device=xyz.device)]),
+    torch.stack([sin_angle, cos_angle, torch.tensor(0.0, device=xyz.device)]),
+    torch.stack([torch.tensor(0.0, device=xyz.device), torch.tensor(0.0, device=xyz.device), torch.tensor(1.0, device=xyz.device)])
+])
     xyz_rotated = torch.matmul(xyz_centered, rotation_matrix.T)
 
     # Step 3: Translate back to original centroid
@@ -248,22 +248,19 @@ class GaussianModel:
                                                         max_steps=training_args.position_lr_max_steps)
         else:
             # 4 chairs = 4 centers fed in.
-            # self.scale = nn.Parameter(self.scale.requires_grad_(True))
-            # l = [
-            #     {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
-            # ]
-            # self.scale_optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
+            self.scale = nn.Parameter(self.scale.requires_grad_(True))
+            l = [
+                {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
+            ]
+            self.scale_optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
             for c in centers:
                 c_tensor = torch.tensor(np.asarray(c)).float().cuda()
-                c_tensor.requires_grad_(False)
-                self.centers.append(c_tensor)
-                # self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
-                # lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
-                # self.center_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
+                self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
+                lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
+                self.center_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
 
                 r_tensor = torch.tensor(90.0).float().cuda()
-                r_tensor.requires_grad_(True)
-                self.rot_vars.append(nn.Parameter(r_tensor))
+                self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
                 lrv = [{'params': [self.rot_vars[-1]], 'lr': training_args.rotation_lr, "name": "rot_var"},]
                 self.rot_var_optimizers.append(torch.optim.Adam(lrv, lr=0.0, eps=1e-15))
                 
