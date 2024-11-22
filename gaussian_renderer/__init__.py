@@ -14,7 +14,25 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         xyz = pc.get_xyz
     centroid = xyz.mean(dim=0)
 
-    xyz, rotation_matrix = rotate_around_z(xyz, pc.rot_vars[center_id], centroid)
+    #--
+    print('rot_var:', pc.rot_vars[center_id])
+    xyz_centered = xyz - centroid
+
+    # Step 2: Apply rotation
+    angle_radians = torch.deg2rad(torch.tensor(pc.rot_vars[center_id], device=xyz.device))
+    cos_angle = torch.cos(angle_radians)
+    sin_angle = torch.sin(angle_radians)
+    rotation_matrix = torch.tensor([
+        [cos_angle, -sin_angle, 0.0],
+        [sin_angle, cos_angle, 0.0],
+        [0.0, 0.0, 1.0]
+    ], device=xyz.device)
+    xyz_rotated = torch.matmul(xyz_centered, rotation_matrix.T)
+
+    # Step 3: Translate back to original centroid
+    xyz = xyz_rotated + centroid
+    #--
+    # xyz, rotation_matrix = rotate_around_z(xyz, pc.rot_vars[center_id], centroid)
 
     # center to origin then scale
     xyz = ((xyz - centroid) * pc.scale) + centroid

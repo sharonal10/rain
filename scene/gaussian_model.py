@@ -119,7 +119,7 @@ class GaussianModel:
         # render, render_multi.
         # in the training scripts, the save multi code.
         self.centers = [] # represents the offset applied to create other instances
-        self.scale = torch.tensor(1.0).float().cuda() # they should still all be the same scale
+        self.scale = torch.tensor(0.5).float().cuda() # they should still all be the same scale
         self.rot_vars = [] # all different rotations (in degrees)
         self.center_optimizers = []
         self.scale_optimizer = None
