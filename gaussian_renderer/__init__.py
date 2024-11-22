@@ -12,7 +12,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     else:
         assert False, "center_id should never be None for this experiment"
         xyz = pc.get_xyz
-    centroid = xyz.mean(dim=0)
+    centroid = xyz.mean(dim=0).detach()
 
     xyz, rotation_matrix = rotate_around_z(xyz, pc.rot_vars[center_id], centroid)
 
@@ -106,7 +106,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
         # xyz.append(curr)
         for i, center in enumerate(pc.centers):
             curr = pc.get_xyz + center
-            centroid = curr.mean(dim=0)
+            centroid = curr.mean(dim=0).detach()
             # center to origin then scale
             curr, rotation_matrix = rotate_around_z(curr, pc.rot_vars[i], centroid)
             rotation_quaternion = rotation_matrix_to_quaternion(rotation_matrix)
