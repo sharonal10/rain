@@ -252,7 +252,7 @@ class GaussianModel:
             # l = [
             #     {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
             # ]
-            self.scale_optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
+            # self.scale_optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
             for c in centers:
                 c_tensor = torch.tensor(np.asarray(c)).float().cuda()
                 c_tensor.requires_grad_(False)
