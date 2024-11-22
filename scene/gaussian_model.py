@@ -39,7 +39,7 @@ def rotation_matrix_to_quaternion(rotation_matrix):
         qx = (R[0, 2] + R[2, 0]) / s
         qy = (R[1, 2] + R[2, 1]) / s
         qz = 0.25 * s
-    return torch.tensor([qw, qx, qy, qz], device=rotation_matrix.device)
+    return torch.stack([qw, qx, qy, qz])
 
 def rotate_quaternions(quaternions, rotation_quaternion):
     """Rotate a batch of quaternions by another quaternion."""
