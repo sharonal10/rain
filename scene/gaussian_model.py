@@ -256,7 +256,7 @@ class GaussianModel:
             for c in centers:
                 c_tensor = torch.tensor(np.asarray(c)).float().cuda()
                 c_tensor.requires_grad_(False)
-                self.centers.appendc_tensor
+                self.centers.append(c_tensor)
                 # self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
                 # lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
                 # self.center_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
