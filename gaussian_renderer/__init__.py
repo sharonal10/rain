@@ -99,11 +99,6 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     xyz = []
     rotation_quaternions = []
     for pc in gaussians_list:
-        # curr = pc.get_xyz
-        # centroid = curr.mean(dim=0)
-        # # center to origin then scale
-        # curr = ((curr - centroid) * pc.scale) + centroid
-        # xyz.append(curr)
         for i, center in enumerate(pc.centers):
             curr = pc.get_xyz + center
             centroid = curr.mean(dim=0).detach()
@@ -159,14 +154,12 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     else:
         scales = []
         for pc in gaussians_list:
-            # scales.append(pc.get_scaling)
             for center in pc.centers:
                 scales.append(pc.get_scaling)
         scales = torch.cat(scales, dim=0)
         
         rotations = []
         for pc in gaussians_list:
-            # rotations.append(pc.get_rotation)
             for i, center in enumerate(pc.centers):
                 rotations.append(rotate_quaternions(pc.get_rotation, rotation_quaternions[i]))
         rotations = torch.cat(rotations, dim=0)
@@ -176,7 +169,6 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
     if override_color is None:
         feats = []
         for pc in gaussians_list:
-            # feats.append(pc.get_features)
             for center in pc.centers:
                 feats.append(pc.get_features)
         if pipe.convert_SHs_python:

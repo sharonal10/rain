@@ -284,9 +284,6 @@ def readColmapSceneInfo(path, images, eval, llffhold=8, args_dict=None, mask_id=
             ply_path = ""
         else:
             print('generating point cloud in a box')
-            # box_center = np.array([-0.632, 0.592, 2.72])
-            # box_size = np.array([0.318, 0.478, 0.738])
-            # box_rotation = np.radians([-41.176, -48.239, -37.687])
             box_path = os.path.join(path, f"sparse/0/{args_dict['box_name']}_{mask_id:03}.txt")
             print(f'loading box from {box_path}')
             box_center, box_rotation, box_size, num_points = read_box(box_path)

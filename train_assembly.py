@@ -29,7 +29,7 @@ except ImportError:
 # assembly script
 # 1) load required files
 # 2) duplicate as needed
-# 3) optimize only scale and offset, do not otherwise optimize gaussians
+# 3) optimize only rotation, scale, and offset, do not otherwise optimize gaussians
 def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoint_iterations ,checkpoint, debug_from, args_dict):
     first_iter = 0
     tb_writer = prepare_output_and_logger(dataset, args_dict['output_path'], args_dict['exp_name'], args_dict['project_name'])
@@ -41,8 +41,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     print(f"Set divide_ratio to {divide_ratio}")
 
     # gather centers (hardcoded for now)
-    # reference center is bottom drawer. coordinates for each center is the offset between each drawer and the bottom drawer
-    # render_multi assumes that we at least want to render it once without applying an offset
+    # note: 'centers' and 'offsets' are used interchangably
     boxes_to_load = [1, 2, 3]
     raw_centers = []
     for box_id in boxes_to_load:
@@ -53,12 +52,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             raw_centers.append(box_center)
         else:
             raw_centers.append(np.array([0, 0, 0]))
-
-    # processed_centers = []
-    # for i in range(3):
-    #     processed_centers.append(raw_centers[i] - raw_centers[-1])
-    # # choose the bottom drawer to be the 'zero' - but still need to center the
-    # # loaded gaussians to the bottom drawer's position
 
     
     gaussians_list = []
@@ -72,7 +65,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         0: [0],
         3: [1, 2, 3],    
     }
-    for mask_id in [0, 3]: # dresser body + bottom drawer
+    for mask_id in [0, 3]: # 0 = table, 3 = chair, which is duplicated to make 1 & 2
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load[mask_id])
         if mask_id == 0:
@@ -173,7 +166,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
                 gt_image = viewpoint_cam.original_image.cuda()
                 mask = viewpoint_cam.masks[center_id].cuda()
-                masked_image = image
+                masked_image = image # don't apply mask to rendered image
                 # masked_image = image*mask
                 masked_gt_image = gt_image*mask
 
@@ -223,6 +216,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     print("\n[ITER {}] Saving Gaussians".format(iteration))
                     scene.save(iteration, center_id)
 
+                # as the gaussians are frozen except for rotation, offset, and scale, disable densification and opacity
+
                 # if iteration < opt.densify_until_iter:       
                 #     gaussians.max_radii2D[visibility_filter] = torch.max(gaussians.max_radii2D[visibility_filter], radii[visibility_filter])
                 #     gaussians.add_densification_stats(viewspace_point_tensor, visibility_filter)
@@ -236,7 +231,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 #     if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
                 #         gaussians.reset_opacity()
 
-        # also backprop for all, assuming bg, pipe etc are the same
+        # also backprop for all, I am assuming bg, pipe etc are fine if kept the same
 
         render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass)
         image = render_pkg["render"]
@@ -263,10 +258,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
             to_save_image.save(os.path.join(scene.model_path, f'mask_whole_{iteration}.png'))
 
-        # assert False
         Ll1 = l1_loss(masked_image, masked_gt_image)
         loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-        loss.backward() # will accumulate
+        loss.backward()
 
         for sub_iter in range(len(gaussians_list)):
             gaussians = gaussians_list[sub_iter]
@@ -305,7 +299,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
         with torch.no_grad():
             if (iteration in saving_iterations):
-                # save all together
+                
+                # save all together - based on save() function in scene/__init__.py
                 point_cloud_path = os.path.join(dataset.model_path, "point_cloud/iteration_{}".format(iteration))
                 os.makedirs(point_cloud_path, exist_ok = True)
                 for pc in gaussians_list:
