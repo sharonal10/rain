@@ -300,10 +300,10 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         
 
         with torch.no_grad():
-            if iteration % 100 == 0 or iteration == 1:
+            if iteration % 100 == 0 or iteration < 100:
                 display_cam_idx = 150
                 display_cam = scene.getTrainCameras().copy()[display_cam_idx]
-                display_render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass)
+                display_render_pkg = render_multi(display_cam, gaussians_list, pipe, bg, low_pass = low_pass)
                 display_image = display_render_pkg["render"]
                 gt_display_image = display_cam.original_image.cuda()
 
