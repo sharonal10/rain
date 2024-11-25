@@ -20,6 +20,8 @@ from lpipsPyTorch import lpips
 from plyfile import PlyData, PlyElement
 from PIL import Image
 from utils.general_utils import PILtoTorch
+import cv2
+import glob
 try:
     from torch.utils.tensorboard import SummaryWriter
     TENSORBOARD_FOUND = True
@@ -211,7 +213,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                         r_opt.step()
                         r_opt.zero_grad(set_to_none = True)
                 
-                training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
+                # training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
                     print("\n[ITER {}] Saving Gaussians".format(iteration))
                     scene.save(iteration, center_id)
@@ -298,8 +300,24 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         
 
         with torch.no_grad():
+            if iteration % 100 == 0 or iteration == 1:
+                display_cam_idx = 150
+                display_cam = scene.getTrainCameras().copy()[display_cam_idx]
+                display_render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass)
+                display_image = display_render_pkg["render"]
+                gt_display_image = display_cam.original_image.cuda()
+
+                to_save_image = display_image.detach().permute(1, 2, 0).cpu().numpy()
+                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                frames_folder = os.path.join(scene.model_path, "display")
+                os.makedirs(frames_folder, exist_ok=True)
+                to_save_image.save(os.path.join(frames_folder, f'{iteration:04d}.png'))
+
+                to_save_image = gt_display_image.detach().permute(1, 2, 0).cpu().numpy()
+                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                to_save_image.save(os.path.join(scene.model_path, f'gt_display.png'))
+
             if (iteration in saving_iterations):
-                
                 # save all together - based on save() function in scene/__init__.py
                 point_cloud_path = os.path.join(dataset.model_path, "point_cloud/iteration_{}".format(iteration))
                 os.makedirs(point_cloud_path, exist_ok = True)
@@ -344,6 +362,21 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 el = PlyElement.describe(elements, 'vertex')
                 print(os.path.join(point_cloud_path, "point_cloud.ply"))
                 PlyData([el]).write(os.path.join(point_cloud_path, "point_cloud.ply"))
+
+    print('saving video')
+    video_path = os.path.join(scene.model_path, "output_video.mp4")
+    image_files = sorted(glob.glob(os.path.join(frames_folder, "*.png")))
+    first_image = cv2.imread(image_files[0])
+    frame_height, frame_width, _ = first_image.shape
+    fps = 10
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    video_writer = cv2.VideoWriter(video_path, fourcc, fps, (frame_width, frame_height))
+
+    for file in image_files:
+        image = cv2.imread(file)
+        video_writer.write(image)
+
+    video_writer.release()
                     
 
 def prepare_output_and_logger(args, output_path, exp_name, project_name):
