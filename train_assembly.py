@@ -99,23 +99,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     random.shuffle(scene_order)
 
     for iteration in range(first_iter, opt.iterations + 1):
-        with torch.no_grad():
-            if iteration % 100 == 0 or iteration < 100:
-                display_cam_idx = 150
-                display_cam = scene.getTrainCameras().copy()[display_cam_idx]
-                display_render_pkg = render_multi(display_cam, gaussians_list, pipe, bg, low_pass = low_pass)
-                display_image = display_render_pkg["render"]
-                gt_display_image = display_cam.original_image.cuda()
-
-                to_save_image = display_image.detach().permute(1, 2, 0).cpu().numpy()
-                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                frames_folder = os.path.join(scene.model_path, "display")
-                os.makedirs(frames_folder, exist_ok=True)
-                to_save_image.save(os.path.join(frames_folder, f'{iteration:04d}.png'))
-
-                to_save_image = gt_display_image.detach().permute(1, 2, 0).cpu().numpy()
-                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                to_save_image.save(os.path.join(scene.model_path, f'gt_display.png'))
         if not viewpoint_stack:
             random.shuffle(scene_order)
             viewpoint_stack = scene_order.copy()
@@ -172,6 +155,25 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     print(f"[ITER {iteration}] Low pass filter : {low_pass}")
             else:
                 low_pass = 0.3
+
+                
+            with torch.no_grad():
+                if iteration % 100 == 0 or iteration < 100:
+                    display_cam_idx = 150
+                    display_cam = scene.getTrainCameras().copy()[display_cam_idx]
+                    display_render_pkg = render_multi(display_cam, gaussians_list, pipe, bg, low_pass = low_pass)
+                    display_image = display_render_pkg["render"]
+                    gt_display_image = display_cam.original_image.cuda()
+
+                    to_save_image = display_image.detach().permute(1, 2, 0).cpu().numpy()
+                    to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                    frames_folder = os.path.join(scene.model_path, "display")
+                    os.makedirs(frames_folder, exist_ok=True)
+                    to_save_image.save(os.path.join(frames_folder, f'{iteration:04d}.png'))
+
+                    to_save_image = gt_display_image.detach().permute(1, 2, 0).cpu().numpy()
+                    to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                    to_save_image.save(os.path.join(scene.model_path, f'gt_display.png'))
                 
             for center_id in list(range(len(gaussians.centers))):
                 if viewpoint_cam.masks[center_id].cuda().sum() < 5:
