@@ -235,6 +235,24 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
         # also backprop for all, I am assuming bg, pipe etc are fine if kept the same
 
+        with torch.no_grad():
+            if iteration % 100 == 0 or iteration < 100:
+                display_cam_idx = 150
+                display_cam = scene.getTrainCameras().copy()[display_cam_idx]
+                display_render_pkg = render_multi(display_cam, gaussians_list, pipe, bg, low_pass = low_pass)
+                display_image = display_render_pkg["render"]
+                gt_display_image = display_cam.original_image.cuda()
+
+                to_save_image = display_image.detach().permute(1, 2, 0).cpu().numpy()
+                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                frames_folder = os.path.join(scene.model_path, "display")
+                os.makedirs(frames_folder, exist_ok=True)
+                to_save_image.save(os.path.join(frames_folder, f'{iteration:04d}.png'))
+
+                to_save_image = gt_display_image.detach().permute(1, 2, 0).cpu().numpy()
+                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                to_save_image.save(os.path.join(scene.model_path, f'gt_display.png'))
+
         render_pkg = render_multi(viewpoint_cam, gaussians_list, pipe, bg, low_pass = low_pass)
         image = render_pkg["render"]
 
@@ -300,22 +318,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         
 
         with torch.no_grad():
-            if iteration % 100 == 0 or iteration < 100:
-                display_cam_idx = 150
-                display_cam = scene.getTrainCameras().copy()[display_cam_idx]
-                display_render_pkg = render_multi(display_cam, gaussians_list, pipe, bg, low_pass = low_pass)
-                display_image = display_render_pkg["render"]
-                gt_display_image = display_cam.original_image.cuda()
-
-                to_save_image = display_image.detach().permute(1, 2, 0).cpu().numpy()
-                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                frames_folder = os.path.join(scene.model_path, "display")
-                os.makedirs(frames_folder, exist_ok=True)
-                to_save_image.save(os.path.join(frames_folder, f'{iteration:04d}.png'))
-
-                to_save_image = gt_display_image.detach().permute(1, 2, 0).cpu().numpy()
-                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                to_save_image.save(os.path.join(scene.model_path, f'gt_display.png'))
 
             if (iteration in saving_iterations):
                 # save all together - based on save() function in scene/__init__.py
