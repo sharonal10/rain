@@ -71,7 +71,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load[mask_id])
         if mask_id == 0:
-            gaussians.training_setup(opt, [np.array([0, 0, 0])]) 
+            gaussians.training_setup(opt, [np.array([0, 0.3, 0])]) 
         else:
             assert False
             # gaussians.training_setup(opt, raw_centers) 
@@ -159,7 +159,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 
             
             with torch.no_grad():
-                if iteration % 100 == 0 or iteration < 100:
+                if iteration % 10 == 0 or iteration == 1:
                     display_cam_idx = 150
                     display_cam = scene.getTrainCameras().copy()[display_cam_idx]
                     display_render_pkg = render_multi(display_cam, gaussians_list, pipe, bg, low_pass = low_pass)
@@ -369,7 +369,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     image_files = sorted(glob.glob(os.path.join(frames_folder, "*.png")))
     first_image = cv2.imread(image_files[0])
     frame_height, frame_width, _ = first_image.shape
-    fps = 10
+    fps = 30
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video_writer = cv2.VideoWriter(video_path, fourcc, fps, (frame_width, frame_height))
 
