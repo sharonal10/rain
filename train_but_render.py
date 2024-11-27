@@ -107,7 +107,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         gaussians_list[0].rot_vars[0].data = torch.tensor(-0.643).float().cuda()
 
         gaussians_list[1].centers[0].data[:] = torch.tensor([0.204, -0.908, -0.077]).float().cuda()
-        gaussians_list[1].scale.data = torch.tensor(0.851).float().cuda()
+        gaussians_list[1].scale.data = torch.tensor(0.547).float().cuda()
         gaussians_list[1].rot_vars[0].data = torch.tensor(1.075).float().cuda()
 
         gaussians_list[1].centers[1].data[:] = torch.tensor([0.284, 0.761, -0.077]).float().cuda()
