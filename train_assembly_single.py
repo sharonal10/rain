@@ -228,7 +228,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.close()
 
                 if iteration < opt.iterations:
-                    if iteration > args['gt_translation'] and iteration < args['lt_translation']:
+                    if iteration > args_dict['gt_translation'] and iteration < args_dict['lt_translation']:
                         for c_opt in gaussians.center_optimizers:
                             c_opt.step()
                             c_opt.zero_grad(set_to_none = True)
