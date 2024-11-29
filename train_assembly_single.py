@@ -208,7 +208,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 
                 Ll1 = l1_loss(masked_image, masked_gt_image)
                 rendered_binary = (image.sum(dim=0) > 0).float() #non-black pixels
-                print('rendered binary percent:', rendered_binary.sum() / rendered_binary.numel())
+                # print('rendered binary percent:', rendered_binary.sum() / rendered_binary.numel())
                 intersection = (rendered_binary * mask).sum()
                 union = (rendered_binary + mask).clamp(0, 1).sum()
                 iou = 1 - (intersection / union.clamp(min=1e-6))
