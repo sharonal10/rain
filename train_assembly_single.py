@@ -228,7 +228,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.close()
 
                 if iteration < opt.iterations:
-                    if iteration > 7000 and iteration < 10000:
+                    if iteration > args['gt_translation'] and iteration < args['lt_translation']:
                         for c_opt in gaussians.center_optimizers:
                             c_opt.step()
                             c_opt.zero_grad(set_to_none = True)
@@ -494,6 +494,9 @@ if __name__ == "__main__":
     parser.add_argument("--box_name", type=str, help="name of the .txt file with box params")
     parser.add_argument("--use_orig", action="store_true", help="Use box_gen initialisation")
     parser.add_argument("--input_pcs", nargs="+", type=str, required=True, help="paths to point clouds to load")
+
+    parser.add_argument("--gt_translation", type=int, required=True)
+    parser.add_argument("--lt_translation", type=int, required=True)
     
     # removed for now, will hardcode
     # parser.add_argument('--num_masks', type=int, required=True)
