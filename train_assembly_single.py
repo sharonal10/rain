@@ -374,7 +374,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 PlyData([el]).write(os.path.join(point_cloud_path, "point_cloud.ply"))
 
     print('saving video')
-    video_path = os.path.join(scene.model_path, "output_video.mp4")
+    video_path = os.path.join(scene.model_path, f"{args_dict['output_path']}_output_video.mp4")
     image_files = sorted(glob.glob(os.path.join(frames_folder, "*.png")))
     first_image = cv2.imread(image_files[0])
     frame_height, frame_width, _ = first_image.shape
