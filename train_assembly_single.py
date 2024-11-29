@@ -228,7 +228,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.close()
 
                 if iteration < opt.iterations:
-                    if iteration < 3000:
+                    if iteration > 7000 and iteration < 10000:
                         for c_opt in gaussians.center_optimizers:
                             c_opt.step()
                             c_opt.zero_grad(set_to_none = True)
