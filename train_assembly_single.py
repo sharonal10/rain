@@ -125,11 +125,11 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
             iter_start.record()
 
-            if args_dict['ours_new']:
-                if iteration >= args_dict["warmup_iter"]:    
-                    gaussians.update_learning_rate(iteration-args_dict["warmup_iter"])
-            else:
-                gaussians.update_learning_rate(iteration)
+            # if args_dict['ours_new']:
+            #     if iteration >= args_dict["warmup_iter"]:    
+            #         gaussians.update_learning_rate(iteration-args_dict["warmup_iter"])
+            # else:
+            #     gaussians.update_learning_rate(iteration)
 
             if args_dict['ours'] or args_dict['ours_new']:
                 if iteration >= 5000:
