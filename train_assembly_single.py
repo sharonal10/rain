@@ -207,7 +207,14 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     to_save_image.save(os.path.join(scene.model_path, f'mask_{sub_iter}_{center_id}_{iteration}.png'))
                 
                 Ll1 = l1_loss(masked_image, masked_gt_image)
+                rendered_binary = (image.sum(dim=0) > 0).float() #non-black pixels
+                print('rendered binary percent:', rendered_binary.sum() / rendered_binary.numel())
+                intersection = (rendered_binary * mask).sum()
+                union = (rendered_binary + mask).clamp(0, 1).sum()
+                iou = 1 - (intersection / union.clamp(min=1e-6))
+
                 loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
+                loss = loss + iou
                 loss.backward()
 
                 iter_end.record()
@@ -221,14 +228,16 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.close()
 
                 if iteration < opt.iterations:
-                    gaussians.scale_optimizer.step()
-                    gaussians.scale_optimizer.zero_grad(set_to_none = True)
-                    for c_opt in gaussians.center_optimizers:
-                        c_opt.step()
-                        c_opt.zero_grad(set_to_none = True)
-                    for r_opt in gaussians.rot_var_optimizers:
-                        r_opt.step()
-                        r_opt.zero_grad(set_to_none = True)
+                    if iteration < 3000:
+                        for c_opt in gaussians.center_optimizers:
+                            c_opt.step()
+                            c_opt.zero_grad(set_to_none = True)
+                    else:
+                        gaussians.scale_optimizer.step()
+                        gaussians.scale_optimizer.zero_grad(set_to_none = True)
+                        for r_opt in gaussians.rot_var_optimizers:
+                            r_opt.step()
+                            r_opt.zero_grad(set_to_none = True)
                 
                 # training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
