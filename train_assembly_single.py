@@ -207,10 +207,10 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     to_save_image.save(os.path.join(scene.model_path, f'mask_{sub_iter}_{center_id}_{iteration}.png'))
                 
                 Ll1 = l1_loss(masked_image, masked_gt_image)
-                rendered_binary = (image.sum(dim=0) > 0).float() #non-black pixels
+                rendered_binary = torch.sigmoid(image.sum(dim=0)) #non-black pixels
                 # print('rendered binary percent:', rendered_binary.sum() / rendered_binary.numel())
                 intersection = (rendered_binary * mask).sum()
-                union = (rendered_binary + mask).clamp(0, 1).sum()
+                union = (rendered_binary + mask - (rendered_binary * mask)).sum()
                 iou = 1 - (intersection / union.clamp(min=1e-6))
 
                 # loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
