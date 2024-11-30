@@ -95,4 +95,4 @@ done
 for dir in output/11_29*_0_15000*; do     if [ -d "$dir" ]; then         python generate_video.py "$dir";     fi; done
 
 
-python train_assembly.py -s sugar/imgs/11_20_synth2/ --exp_name 11_29_b_phase_2_assembly_synth2_3000_12000 --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 15000 --iterations 15000 --input_pcs output/11_17-phase_1_scene_table/point_cloud_0/iteration_7000/point_cloud.ply output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply --min_translation 3000 --max_translation 12000
+python train_assembly.py -s sugar/imgs/11_20_synth2/ --exp_name 11_29_rev_a_phase_2_assembly_synth2_3000_12000 --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 15000 --iterations 15000 --input_pcs output/11_17-phase_1_scene_table/point_cloud_0/iteration_7000/point_cloud.ply output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply --min_translation 3000 --max_translation 12000
