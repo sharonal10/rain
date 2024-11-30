@@ -124,11 +124,11 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
             iter_start.record()
 
-            if args_dict['ours_new']:
-                if iteration >= args_dict["warmup_iter"]:    
-                    gaussians.update_learning_rate(iteration-args_dict["warmup_iter"])
-            else:
-                gaussians.update_learning_rate(iteration)
+            # if args_dict['ours_new']:
+            #     if iteration >= args_dict["warmup_iter"]:    
+            #         gaussians.update_learning_rate(iteration-args_dict["warmup_iter"])
+            # else:
+            #     gaussians.update_learning_rate(iteration)
 
             if args_dict['ours'] or args_dict['ours_new']:
                 if iteration >= 5000:
@@ -224,14 +224,16 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.close()
 
                 if iteration < opt.iterations:
-                    gaussians.scale_optimizer.step()
-                    gaussians.scale_optimizer.zero_grad(set_to_none = True)
-                    for c_opt in gaussians.center_optimizers:
-                        c_opt.step()
-                        c_opt.zero_grad(set_to_none = True)
-                    for r_opt in gaussians.rot_var_optimizers:
-                        r_opt.step()
-                        r_opt.zero_grad(set_to_none = True)
+                    if iteration > args_dict['min_translation'] and iteration < args_dict['max_translation']:
+                        for c_opt in gaussians.center_optimizers:
+                            c_opt.step()
+                            c_opt.zero_grad(set_to_none = True)
+                    else:
+                        gaussians.scale_optimizer.step()
+                        gaussians.scale_optimizer.zero_grad(set_to_none = True)
+                        for r_opt in gaussians.rot_var_optimizers:
+                            r_opt.step()
+                            r_opt.zero_grad(set_to_none = True)
                 
                 # training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
@@ -281,42 +283,42 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
             to_save_image.save(os.path.join(scene.model_path, f'mask_whole_{iteration}.png'))
 
-        Ll1 = l1_loss(masked_image, masked_gt_image)
-        loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-        loss.backward()
+        # Ll1 = l1_loss(masked_image, masked_gt_image)
+        # loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
+        # loss.backward()
 
-        for sub_iter in range(len(gaussians_list)):
-            gaussians = gaussians_list[sub_iter]
-            scene = scene_list[sub_iter]
-            viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
+        # for sub_iter in range(len(gaussians_list)):
+        #     gaussians = gaussians_list[sub_iter]
+        #     scene = scene_list[sub_iter]
+        #     viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
 
-            with torch.no_grad():
-                ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
-                if iteration % 10 == 0:
-                    progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}", "num_gaussians" : f"{gaussians.get_xyz.shape[0]}"})
-                    progress_bar.update(5)
-                if iteration == opt.iterations:
-                    progress_bar.close()
+        #     with torch.no_grad():
+        #         ema_loss_for_log = 0.4 * loss.item() + 0.6 * ema_loss_for_log
+        #         if iteration % 10 == 0:
+        #             progress_bar.set_postfix({"Loss": f"{ema_loss_for_log:.{7}f}", "num_gaussians" : f"{gaussians.get_xyz.shape[0]}"})
+        #             progress_bar.update(5)
+        #         if iteration == opt.iterations:
+        #             progress_bar.close()
                 
 
-                if iteration < opt.iterations:
-                    gaussians.scale_optimizer.step()
-                    gaussians.scale_optimizer.zero_grad(set_to_none = True)
-                    for c_opt in gaussians.center_optimizers:
-                        c_opt.step()
-                        c_opt.zero_grad(set_to_none = True)
-                    for r_opt in gaussians.rot_var_optimizers:
-                        print('rot whole')
-                        r_opt.step()
-                        r_opt.zero_grad(set_to_none = True)
-                    print('--')
-                    print(sub_iter)
-                    print('scale', gaussians.scale)
-                    print('rot', gaussians.rot_vars)
+        #         if iteration < opt.iterations:
+        #             gaussians.scale_optimizer.step()
+        #             gaussians.scale_optimizer.zero_grad(set_to_none = True)
+        #             for c_opt in gaussians.center_optimizers:
+        #                 c_opt.step()
+        #                 c_opt.zero_grad(set_to_none = True)
+        #             for r_opt in gaussians.rot_var_optimizers:
+        #                 print('rot whole')
+        #                 r_opt.step()
+        #                 r_opt.zero_grad(set_to_none = True)
+        #             print('--')
+        #             print(sub_iter)
+        #             print('scale', gaussians.scale)
+        #             print('rot', gaussians.rot_vars)
 
-                if (iteration in checkpoint_iterations):
-                    print("\n[ITER {}] Saving Checkpoint".format(iteration))
-                    torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
+                # if (iteration in checkpoint_iterations):
+                #     print("\n[ITER {}] Saving Checkpoint".format(iteration))
+                #     torch.save((gaussians.capture(), iteration), scene.model_path + "/chkpnt" + str(iteration) + ".pth")
 
         
 
@@ -368,8 +370,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 print(os.path.join(point_cloud_path, "point_cloud.ply"))
                 PlyData([el]).write(os.path.join(point_cloud_path, "point_cloud.ply"))
 
-    print('saving video')
-    video_path = os.path.join(scene.model_path, "output_video.mp4")
+    video_path = os.path.join(scene.model_path, f"{os.path.basename(scene.model_path)}_output_video.mp4")
+    print('saving video', video_path)
     image_files = sorted(glob.glob(os.path.join(frames_folder, "*.png")))
     first_image = cv2.imread(image_files[0])
     frame_height, frame_width, _ = first_image.shape

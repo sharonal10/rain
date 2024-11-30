@@ -507,6 +507,9 @@ if __name__ == "__main__":
     parser.add_argument("--box_name", type=str, help="name of the .txt file with box params")
     parser.add_argument("--use_orig", action="store_true", help="Use box_gen initialisation")
     parser.add_argument("--input_pcs", nargs="+", type=str, required=True, help="paths to point clouds to load")
+
+    parser.add_argument("--min_translation", type=int, required=True)
+    parser.add_argument("--max_translation", type=int, required=True)
     
     # removed for now, will hardcode
     # parser.add_argument('--num_masks', type=int, required=True)
