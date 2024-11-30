@@ -103,7 +103,7 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
             curr = pc.get_xyz + center
             centroid = curr.mean(dim=0).detach()
             # center to origin then scale
-            print(f'angle is {(pc.rot_vars[i] - 0.3) * 100}')
+            # print(f'angle is {(pc.rot_vars[i] - 0.3) * 100}')
             curr, rotation_matrix = rotate_around_z(curr, (pc.rot_vars[i] - 0.3) * 100, centroid)
             rotation_quaternion = rotation_matrix_to_quaternion(rotation_matrix)
             rotation_quaternions.append(rotation_quaternion)

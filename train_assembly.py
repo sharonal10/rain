@@ -224,11 +224,14 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.close()
 
                 if iteration < opt.iterations:
+                    print(iteration)
                     if iteration > args_dict['min_translation'] and iteration < args_dict['max_translation']:
+                        print('optimizing translation')
                         for c_opt in gaussians.center_optimizers:
                             c_opt.step()
                             c_opt.zero_grad(set_to_none = True)
                     else:
+                        print('optimizing scale and rotation')
                         gaussians.scale_optimizer.step()
                         gaussians.scale_optimizer.zero_grad(set_to_none = True)
                         for r_opt in gaussians.rot_var_optimizers:
