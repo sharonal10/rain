@@ -194,7 +194,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 masked_gt_image = gt_image*mask
                 
                 Ll1 = l1_loss(masked_image, masked_gt_image)
-                rendered_binary = torch.sigmoid((image.sum(dim=0) - 0.5) * 2) #non-black pixels
+                rendered_binary = (torch.sigmoid(image.sum(dim=0) * 100) - 0.5) * 2 #non-black pixels
                 print('rendered_binary.max()', rendered_binary.max())
                 # print('rendered binary percent:', rendered_binary.sum() / rendered_binary.numel())
                 intersection = (rendered_binary * mask).sum()
