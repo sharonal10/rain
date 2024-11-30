@@ -213,8 +213,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 union = (rendered_binary + mask).clamp(0, 1).sum()
                 iou = 1 - (intersection / union.clamp(min=1e-6))
 
-                loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-                loss = loss + iou
+                # loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
+                # loss = loss + iou
+                loss = iou
                 loss.backward()
 
                 iter_end.record()
