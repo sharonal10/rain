@@ -222,9 +222,6 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'rendered_binary_{sub_iter}_{center_id}_{iteration}.png'))
 
-                    assert False
-
-
                 loss.backward()
 
                 iter_end.record()
