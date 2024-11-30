@@ -262,11 +262,11 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 if iteration == opt.iterations:
                     progress_bar.close()
 
-                if idx == 1 and iteration % 100 == 1:
+                if iteration % 100 == 1:
                     print(f'iter is {iteration}')
-                    print(f'object is {sub_iter}_{idx}')
-                    print(f'value is {gaussians.centers[idx]}')
-                    print(f'grad is {gaussians.centers[idx].grad}')
+                    print(f'object is {sub_iter}_{1}')
+                    print(f'value is {gaussians.centers[1]}')
+                    print(f'grad is {gaussians.centers[1].grad}')
                     print(f'translation_mode is {translation_mode}')
                     print('---')
 
@@ -282,7 +282,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                             r_opt.zero_grad(set_to_none = True)
                     else:
                         # print('optimizing translation')
-                        for idx, c_opt in enumerate(gaussians.center_optimizers):
+                        for c_opt in gaussians.center_optimizers:
                             c_opt.step()
                             c_opt.zero_grad(set_to_none = True)
                 
