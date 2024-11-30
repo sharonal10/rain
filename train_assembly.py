@@ -268,7 +268,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     print(f'value is {gaussians.centers[1]}')
                     print(f'grad is {gaussians.centers[1].grad}')
                     print(f'translation_mode is {translation_mode}')
-                    print('---')
+                    print(f'learning rate is {gaussians.center_optimizers[1].param_groups[0]}')
 
                 if iteration < opt.iterations:
                     # print(iteration)
@@ -285,6 +285,10 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                         for c_opt in gaussians.center_optimizers:
                             c_opt.step()
                             c_opt.zero_grad(set_to_none = True)
+                            if len(gaussians.centers) > 1:
+                                print(f'after zero_grad, grad is {gaussians.centers[1].grad}')
+
+                print('---')
                 
                 # training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
