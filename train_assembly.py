@@ -170,7 +170,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     frames_folder = os.path.join(scene.model_path, "display")
                     os.makedirs(frames_folder, exist_ok=True)
-                    to_save_image.save(os.path.join(frames_folder, f'{iteration:04d}.png'))
+                    to_save_image.save(os.path.join(frames_folder, f'{iteration:05d}.png'))
 
                     to_save_image = gt_display_image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
