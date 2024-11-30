@@ -195,19 +195,19 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     os.makedirs(os.path.join(scene.model_path, 'debug'), exist_ok=True)
                     to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'part_{iteration}.png'))
+                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_part.png'))
 
                     to_save_image = (image*mask).detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'part_masked_{iteration}.png'))
+                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_part_masked.png'))
 
                     to_save_image = masked_gt_image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'gt_part_{iteration}.png'))
+                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_gt_part.png'))
 
                     to_save_image = gt_image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'gt_full_{iteration}.png'))
+                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_gt_full.png'))
 
 
                 if iteration % 1000 == 0 or iteration < 4 or iteration == 50:
@@ -243,16 +243,16 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.close()
 
                 if iteration < opt.iterations:
-                    print(iteration)
+                    # print(iteration)
                     if iteration > args_dict['min_translation'] and iteration < args_dict['max_translation']:
-                        print('optimizing scale and rotation')
+                        # print('optimizing scale and rotation')
                         gaussians.scale_optimizer.step()
                         gaussians.scale_optimizer.zero_grad(set_to_none = True)
                         for r_opt in gaussians.rot_var_optimizers:
                             r_opt.step()
                             r_opt.zero_grad(set_to_none = True)
                     else:
-                        print('optimizing translation')
+                        # print('optimizing translation')
                         for c_opt in gaussians.center_optimizers:
                             c_opt.step()
                             c_opt.zero_grad(set_to_none = True)
