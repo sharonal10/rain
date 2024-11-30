@@ -262,9 +262,8 @@ class GaussianModel:
                 self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
                 
 
-            lc = [{'params': self.centers, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
-            # print('old lr was ')
-            # lc = [{'params': self.centers, 'lr': 0.001, "name": "center"},]
+            # lc = [{'params': self.centers, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
+            lc = [{'params': self.centers, 'lr': 0.001, "name": "center"},]
             print(f'lc, {lc}')
             self.center_optimizer = torch.optim.Adam(lc, lr=0.0, eps=1e-15)
             print(self.center_optimizer.param_groups)
@@ -279,6 +278,7 @@ class GaussianModel:
 
     def update_learning_rate(self, iteration):
         ''' Learning rate scheduling per step '''
+        assert False, 'update_learning_rate needs investigation'
         if not self.assembly:
             for param_group in self.optimizer.param_groups:
                 if param_group["name"] == "xyz":
