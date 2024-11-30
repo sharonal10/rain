@@ -271,7 +271,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     print(f'value is {gaussians.centers[0]}')
                     print(f'grad is {gaussians.centers[0].grad}')
                     print(f'translation_mode is {translation_mode}')
-                    print(f'learning rate is {gaussians.center_optimizers[1].param_groups[0]}')
+                    print(f'learning rate is {gaussians.center_optimizer.param_groups}')
 
                 if iteration < opt.iterations:
                     # print(iteration)
@@ -280,16 +280,12 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                         # print('optimizing scale and rotation')
                         gaussians.scale_optimizer.step()
                         gaussians.scale_optimizer.zero_grad(set_to_none = True)
-                        for r_opt in gaussians.rot_var_optimizers:
-                            r_opt.step()
-                            r_opt.zero_grad(set_to_none = True)
+                        gaussians.rot_var_optimizer.step()
+                        gaussians.rot_var_optimizer.zero_grad(set_to_none = True)
                     else:
                         # print('optimizing translation')
-                        for c_opt in gaussians.center_optimizers:
-                            c_opt.step()
-                            c_opt.zero_grad(set_to_none = True)
-                            if len(gaussians.centers) > 1 and iteration % 100 == 1:
-                                print(f'after zero_grad, grad is {gaussians.centers[1].grad}')
+                        gaussians.center_optimizer.step()
+                        gaussians.center_optimizer.zero_grad
                 if iteration % 100 == 1:
                     print('---')
                 
@@ -362,13 +358,10 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         #         if iteration < opt.iterations:
         #             gaussians.scale_optimizer.step()
         #             gaussians.scale_optimizer.zero_grad(set_to_none = True)
-        #             for c_opt in gaussians.center_optimizers:
-        #                 c_opt.step()
-        #                 c_opt.zero_grad(set_to_none = True)
-        #             for r_opt in gaussians.rot_var_optimizers:
-        #                 print('rot whole')
-        #                 r_opt.step()
-        #                 r_opt.zero_grad(set_to_none = True)
+        #             gaussians.center_optimizer.step()
+                    # gaussians.center_optimizer.zero_grad   
+        #             gaussians.rot_var_optimizer.step()
+                    # gaussians.rot_var_optimizer.zero_grad(set_to_none = True)
         #             print('--')
         #             print(sub_iter)
         #             print('scale', gaussians.scale)

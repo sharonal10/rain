@@ -121,9 +121,9 @@ class GaussianModel:
         self.centers = [] # represents the offset applied to create other instances
         self.scale = torch.tensor(0.5).float().cuda() # they should still all be the same scale
         self.rot_vars = [] # all different rotations (in degrees)
-        self.center_optimizers = []
+        self.center_optimizer = None
         self.scale_optimizer = None
-        self.rot_var_optimizers = []
+        self.rot_var_optimizer = None
 
         self.assembly = assembly # if true, enable optim for centers and scale, disable all else
 
@@ -256,13 +256,17 @@ class GaussianModel:
             for c in centers:
                 c_tensor = torch.tensor(np.asarray(c)).float().cuda()
                 self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
-                lc = [{'params': [self.centers[-1]], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
-                self.center_optimizers.append(torch.optim.Adam(lc, lr=0.0, eps=1e-15))
+                
 
                 r_tensor = torch.tensor(1.8).float().cuda() # will be multiplied by 100
                 self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
-                lrv = [{'params': [self.rot_vars[-1]], 'lr': training_args.rotation_lr, "name": "rot_var"},]
-                self.rot_var_optimizers.append(torch.optim.Adam(lrv, lr=0.0, eps=1e-15))
+                
+
+            lc = [{'params': self.centers, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
+            self.center_optimizer = torch.optim.Adam(lc, lr=0.0, eps=1e-15)
+
+            lrv = [{'params': self.rot_vars, 'lr': training_args.rotation_lr, "name": "rot_var"},]
+            self.rot_var_optimizer = torch.optim.Adam(lrv, lr=0.0, eps=1e-15)
                 
 
             
@@ -276,12 +280,11 @@ class GaussianModel:
                     param_group['lr'] = lr
                     return lr
             
-        for opt in self.center_optimizers:
-            for param_group in opt.param_groups:
-                if param_group["name"] == "center":
-                    lr = self.xyz_scheduler_args(iteration)
-                    param_group['lr'] = lr
-                    return lr
+        for param_group in self.center_optimizer.param_groups:
+            if param_group["name"] == "center":
+                lr = self.xyz_scheduler_args(iteration)
+                param_group['lr'] = lr
+                return lr
 
     def construct_list_of_attributes(self):
         l = ['x', 'y', 'z', 'nx', 'ny', 'nz']

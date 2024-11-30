@@ -240,12 +240,10 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 # if iteration < opt.iterations:
                 #     gaussians.scale_optimizer.step()
                 #     gaussians.scale_optimizer.zero_grad(set_to_none = True)
-                #     for c_opt in gaussians.center_optimizers:
-                #         c_opt.step()
-                #         c_opt.zero_grad(set_to_none = True)
-                #     for r_opt in gaussians.rot_var_optimizers:
-                #         r_opt.step()
-                #         r_opt.zero_grad(set_to_none = True)
+                #     gaussians.center_optimizer.step()
+                    # gaussians.center_optimizer.zero_grad
+                #     gaussians.rot_var_optimizer.step()
+                    # gaussians.rot_var_optimizer.zero_grad(set_to_none = True)
                 
                 # training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
@@ -318,13 +316,10 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 # if iteration < opt.iterations:
                 #     gaussians.scale_optimizer.step()
                 #     gaussians.scale_optimizer.zero_grad(set_to_none = True)
-                #     for c_opt in gaussians.center_optimizers:
-                #         c_opt.step()
-                #         c_opt.zero_grad(set_to_none = True)
-                #     for r_opt in gaussians.rot_var_optimizers:
-                #         print('rot whole')
-                #         r_opt.step()
-                #         r_opt.zero_grad(set_to_none = True)
+                #     gaussians.center_optimizer.step()
+                    # gaussians.center_optimizer.zero_grad
+                #     gaussians.rot_var_optimizer.step()
+                    # gaussians.rot_var_optimizer.zero_grad(set_to_none = True)
                 #     print('--')
                 #     print(sub_iter)
                 #     print('scale', gaussians.scale)
