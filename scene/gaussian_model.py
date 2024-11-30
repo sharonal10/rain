@@ -227,7 +227,7 @@ class GaussianModel:
             self._opacity = nn.Parameter(opacities.requires_grad_(True))
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
 
-    def training_setup(self, training_args, centers=[]):
+    def training_setup(self, training_args, centers=[], translation_lr=None):
         self.percent_dense = training_args.percent_dense
         self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
@@ -263,7 +263,7 @@ class GaussianModel:
                 
 
             # lc = [{'params': self.centers, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
-            lc = [{'params': self.centers, 'lr': 0.001, "name": "center"},]
+            lc = [{'params': self.centers, 'lr': translation_lr, "name": "center"},]
             print(f'lc, {lc}')
             self.center_optimizer = torch.optim.Adam(lc, lr=0.0, eps=1e-15)
             print(self.center_optimizer.param_groups)

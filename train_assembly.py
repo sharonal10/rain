@@ -71,9 +71,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load[mask_id])
         if mask_id == 0:
-            gaussians.training_setup(opt, [np.array([0, 0, 0])]) 
+            gaussians.training_setup(opt, centers=[np.array([0, 0, 0])], translation_lr=args_dict['translation_lr']) 
         else:
-            gaussians.training_setup(opt, raw_centers) 
+            gaussians.training_setup(opt, centers=raw_centers, translation_lr=args_dict['translation_lr']) 
         gaussians_list.append(gaussians)
         scene_list.append(scene)
     
@@ -545,6 +545,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--min_translation", type=int, required=True)
     parser.add_argument("--max_translation", type=int, required=True)
+
+    parser.add_argument("--translation_lr", type=float, required=True)
     
     # removed for now, will hardcode
     # parser.add_argument('--num_masks', type=int, required=True)
