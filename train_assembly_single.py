@@ -228,7 +228,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     progress_bar.close()
 
                 if iteration < opt.iterations:
-                    if iteration > args_dict['gt_translation'] and iteration < args_dict['lt_translation']:
+                    if iteration > args_dict['min_translation'] and iteration < args_dict['max_translation']:
                         gaussians.scale_optimizer.step()
                         gaussians.scale_optimizer.zero_grad(set_to_none = True)
                         for r_opt in gaussians.rot_var_optimizers:
@@ -374,8 +374,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 print(os.path.join(point_cloud_path, "point_cloud.ply"))
                 PlyData([el]).write(os.path.join(point_cloud_path, "point_cloud.ply"))
 
-    print('saving video')
+    
     video_path = os.path.join(scene.model_path, f"{args_dict['output_path']}_output_video.mp4")
+    print(f'saving video, {video_path}')
     image_files = sorted(glob.glob(os.path.join(frames_folder, "*.png")))
     first_image = cv2.imread(image_files[0])
     frame_height, frame_width, _ = first_image.shape

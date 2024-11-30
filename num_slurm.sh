@@ -32,6 +32,11 @@ pairs=(
     "6000 9000"
     "6000 12000"
     "9000 12000"
+    "3000 15000"
+    "6000 15000"
+    "6000 15000"
+    "9000 15000"
+    "12000 15000"
 )
 for pair in "${pairs[@]}"; do
     a=$(echo $pair | cut -d' ' -f1)
@@ -39,7 +44,7 @@ for pair in "${pairs[@]}"; do
     underscore_pair="${a}_${b}"
     python -m tu.sbatch.sbatch_sweep --time 24:00:00 \
     --proj_dir /viscam/projects/image2Blender/RAIN-GS --conda_env rain \
-    --job "11_28_sanity_check_synth2_chair_rev_${underscore_pair}" --command "python train_assembly_single.py -s sugar/imgs/11_20_synth2_chair/ --exp_name 11_28_sanity_check_synth2_rev_chair_${underscore_pair} --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 15000 --iterations 15000 --input_pcs output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply --lt_translation ${a} --gt_translation ${b}" --partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 64G
+    --job "11_28_sanity_check_synth2_chair_rev_${underscore_pair}" --command "python train_assembly_single.py -s sugar/imgs/11_20_synth2_chair/ --exp_name 11_28_sanity_check_synth2_rev_chair_${underscore_pair} --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 15000 --iterations 15000 --input_pcs output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply --min_translation ${a} --max_translation ${b}" --partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 64G
 done
 
 for dir in output/11_28_*; do
