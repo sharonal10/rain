@@ -6,7 +6,7 @@ python -m tu.sbatch.sbatch_sweep --time 24:00:00 \
 
     python -m tu.sbatch.sbatch_sweep --time 24:00:00 \
     --proj_dir /viscam/projects/image2Blender/RAIN-GS --conda_env rain \
-    --job "11_28_sanity_check_synth2_chair" --command "python train_assembly_single.py -s sugar/imgs/11_20_synth2_chair/ --exp_name 11_28_sanity_check_synth2_chair2 --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 1000 3500 7000 --iterations 7000 --input_pcs output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply" --partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 64G
+    --job "11_28_sanity_check_synth2_chair" --command "python train_assembly_single.py -s sugar/imgs/11_20_synth2_chair/ --exp_name 11_30_sanity_check_synth2_chair2 --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 1000 3500 7000 --iterations 7000 --input_pcs output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply" --partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 64G
 
 pairs=(
     "3000 6000"
@@ -103,10 +103,12 @@ python -m tu.sbatch.sbatch_sweep --time 24:00:00 \
     --job "11_29_rev_d_phase_2_assembly_synth2_3kiter_1000_2000" --command "python train_assembly.py -s sugar/imgs/11_20_synth2/ --exp_name 11_29_rev_d_phase_2_assembly_synth2_3kiter_1000_2000 --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 3000 --iterations 3000 --input_pcs output/11_17-phase_1_scene_table/point_cloud_0/iteration_7000/point_cloud.ply output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply --min_translation 1000 --max_translation 2000" --partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 64G
 
 lrs=(
-    "0.0001" "0.00001" "0.000001" "0.0000001" "0.00000001" "0.000000001"
+    "0.001" "0.0005"
 )
 for lr in "${lrs[@]}"; do
     python -m tu.sbatch.sbatch_sweep --time 24:00:00 \
     --proj_dir /viscam/projects/image2Blender/RAIN-GS --conda_env rain \
-    --job "11_29_rev_g_phase_2_assembly_synth2_3kiter_1000_2000_${lr}" --command "python train_assembly.py -s sugar/imgs/11_20_synth2/ --exp_name 11_29_rev_g_phase_2_assembly_synth2_3kiter_1000_2000_${lr} --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 3000 --iterations 3000 --input_pcs output/11_17-phase_1_scene_table/point_cloud_0/iteration_7000/point_cloud.ply output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply --min_translation 1000 --max_translation 2000 --translation_lr ${lr}" --partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 64G
+    --job "11_29_rev_h_phase_2_assembly_synth2_3kiter_1000_2000_${lr}" --command "python train_assembly.py -s sugar/imgs/11_20_synth2/ --exp_name 11_29_rev_h_phase_2_assembly_synth2_3kiter_1000_2000_${lr} --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 3000 --iterations 3000 --input_pcs output/11_17-phase_1_scene_table/point_cloud_0/iteration_7000/point_cloud.ply output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply --min_translation 1000 --max_translation 2000 --translation_lr ${lr}" --partition viscam --account viscam --gpu_type a6000 --cpus_per_task 8 --num_gpus 1 --mem 64G
 done
+
+python train_assembly_single.py -s sugar/imgs/11_20_synth2_chair/ --exp_name 11_30_sanity_check_synth2_rev_chair_1000_2000 --eval --box_gen --box_name box --ours_new --num_cams 300 --save_iterations 1 3000 --iterations 3000 --input_pcs output/11_20_phase_1_synth2_chair/point_cloud_0/iteration_7000/point_cloud.ply --min_translation 1000 --max_translation 2000
