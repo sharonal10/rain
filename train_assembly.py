@@ -262,7 +262,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 if iteration == opt.iterations:
                     progress_bar.close()
 
-                if iteration % 100 == 1:
+                if len(gaussians.centers) > 1 and iteration % 100 == 1:
                     print(f'iter is {iteration}')
                     print(f'object is {sub_iter}_{1}')
                     print(f'value is {gaussians.centers[1]}')
