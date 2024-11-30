@@ -98,6 +98,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     scene_order = list(range(len(scene.getTrainCameras())))
     random.shuffle(scene_order)
 
+    translation_mode = True
     for iteration in range(first_iter, opt.iterations + 1):
         if not viewpoint_stack:
             random.shuffle(scene_order)
@@ -158,7 +159,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
                 
             with torch.no_grad():
-                if iteration % 100 == 0 or iteration < 100:
+                if iteration % 100 == 0 or iteration == 1:
                     display_cam_idx = 150
                     display_cam = scene.getTrainCameras().copy()[display_cam_idx]
                     display_render_pkg = render_multi(display_cam, gaussians_list, pipe, bg, low_pass = low_pass)
@@ -174,6 +175,25 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     to_save_image = gt_display_image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'gt_display.png'))
+
+            if iteration == args_dict['min_translation']:
+                print('switching mode. freezing translation (rev)')
+                for c in gaussians.centers:
+                    c.requires_grad = False
+                for r in gaussians.rot_vars:
+                    r.requires_grad = True
+                gaussians.scale.requires_grad = True
+                translation_mode = False
+
+            if iteration == args_dict['max_translation']:
+                print('switching mode. allowing translation (rev)')
+                for c in gaussians.centers:
+                    c.requires_grad = True
+                for r in gaussians.rot_vars:
+                    r.requires_grad = False
+                gaussians.scale.requires_grad = False
+                translation_mode = True
+
                 
             for center_id in list(range(len(gaussians.centers))):
                 if viewpoint_cam.masks[center_id].cuda().sum() < 5:
@@ -242,9 +262,18 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 if iteration == opt.iterations:
                     progress_bar.close()
 
+                if idx == 1 and iteration % 100 == 1:
+                    print(f'iter is {iteration}')
+                    print(f'object is {sub_iter}_{idx}')
+                    print(f'value is {gaussians.centers[idx]}')
+                    print(f'grad is {gaussians.centers[idx].grad}')
+                    print(f'translation_mode is {translation_mode}')
+                    print('---')
+
                 if iteration < opt.iterations:
                     # print(iteration)
-                    if iteration > args_dict['min_translation'] and iteration < args_dict['max_translation']:
+                    # if iteration > args_dict['min_translation'] and iteration < args_dict['max_translation']:
+                    if translation_mode == False:
                         # print('optimizing scale and rotation')
                         gaussians.scale_optimizer.step()
                         gaussians.scale_optimizer.zero_grad(set_to_none = True)
@@ -253,7 +282,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                             r_opt.zero_grad(set_to_none = True)
                     else:
                         # print('optimizing translation')
-                        for c_opt in gaussians.center_optimizers:
+                        for idx, c_opt in enumerate(gaussians.center_optimizers):
                             c_opt.step()
                             c_opt.zero_grad(set_to_none = True)
                 
