@@ -192,6 +192,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 masked_gt_image = gt_image*mask
 
                 if center_id == 1: # debugging on second chair
+                    os.makedirs(os.path.join(scene.model_path, 'debug'), exist_ok=True)
                     to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, 'debug', f'part_{iteration}.png'))
