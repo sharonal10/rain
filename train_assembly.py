@@ -245,7 +245,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 
                 Ll1 = l1_loss(masked_image, masked_gt_image)
                 loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-                rendered_binary = torch.sigmoid(image.sum(dim=0))
+                rendered_binary = (torch.sigmoid(image.sum(dim=0)) - 0.5) * 2
                 intersection = (rendered_binary * mask).sum()
                 union = (rendered_binary + mask - (rendered_binary * mask)).sum()
                 iou = 1 - (intersection / union.clamp(min=1e-6))
