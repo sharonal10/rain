@@ -107,7 +107,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         for sub_iter in range(len(gaussians_list)):
             gaussians = gaussians_list[sub_iter]
             scene = scene_list[sub_iter]
-            # viewpoint_idx = 150
+            viewpoint_idx = 120
             viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
             if network_gui.conn == None:
                 network_gui.try_connect()
