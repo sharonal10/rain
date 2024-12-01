@@ -197,6 +197,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
                 
             for center_id in list(range(len(gaussians.centers))):
+                if center_id != 1:
+                    continue
                 if viewpoint_cam.masks[center_id].cuda().sum() < 5:
                     if (iteration in saving_iterations):
                         with torch.no_grad():
