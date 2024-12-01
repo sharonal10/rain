@@ -105,6 +105,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             viewpoint_stack = scene_order.copy()
         viewpoint_idx = viewpoint_stack.pop()
         for sub_iter in range(len(gaussians_list)):
+            if sub_iter != 1:
+                continue
             gaussians = gaussians_list[sub_iter]
             scene = scene_list[sub_iter]
             viewpoint_idx = 150
