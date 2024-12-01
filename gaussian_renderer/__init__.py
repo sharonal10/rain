@@ -8,7 +8,7 @@ from utils.sh_utils import eval_sh
 
 def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, scaling_modifier = 1.0, override_color = None, low_pass = 0.3, center_id=None):    
     if center_id is not None:
-        xyz = pc.get_xyz
+        xyz = pc.get_xyz + pc.centers[center_id]
     else:
         assert False, "center_id should never be None for this experiment"
         xyz = pc.get_xyz
@@ -17,7 +17,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     xyz, rotation_matrix = rotate_around_z(xyz, (pc.rot_vars[center_id] - 0.3) * 100, centroid)
 
     # center to origin then scale
-    xyz = ((xyz - centroid) * pc.scale) + centroid  + pc.centers[center_id]
+    xyz = ((xyz - centroid) * pc.scale) + centroid
 
     screenspace_points = torch.zeros_like(xyz, dtype=xyz.dtype, requires_grad=True, device="cuda") + 0
 

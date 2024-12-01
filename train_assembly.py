@@ -71,9 +71,9 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load[mask_id])
         if mask_id == 0:
-            gaussians.training_setup(opt, centers=[np.array([0, 0, 0])], translation_lr=args_dict['translation_lr']) 
+            gaussians.training_setup(opt, centers=[np.array([0, 0, 0])])#, translation_lr=args_dict['translation_lr']) 
         else:
-            gaussians.training_setup(opt, centers=raw_centers, translation_lr=args_dict['translation_lr']) 
+            gaussians.training_setup(opt, centers=raw_centers)#, translation_lr=args_dict['translation_lr']) 
         gaussians_list.append(gaussians)
         scene_list.append(scene)
     
@@ -107,6 +107,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         for sub_iter in range(len(gaussians_list)):
             gaussians = gaussians_list[sub_iter]
             scene = scene_list[sub_iter]
+            viewpoint_idx = 150
             viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
             if network_gui.conn == None:
                 network_gui.try_connect()
@@ -176,23 +177,23 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'gt_display.png'))
 
-            if iteration == args_dict['min_translation']:
-                print('switching mode. freezing translation (rev)')
-                for c in gaussians.centers:
-                    c.requires_grad = False
-                for r in gaussians.rot_vars:
-                    r.requires_grad = True
-                gaussians.scale.requires_grad = True
-                translation_mode = False
+            # if iteration == args_dict['min_translation']:
+            #     print('switching mode. freezing translation (rev)')
+            #     for c in gaussians.centers:
+            #         c.requires_grad = False
+            #     for r in gaussians.rot_vars:
+            #         r.requires_grad = True
+            #     gaussians.scale.requires_grad = True
+            #     translation_mode = False
 
-            if iteration == args_dict['max_translation']:
-                print('switching mode. allowing translation (rev)')
-                for c in gaussians.centers:
-                    c.requires_grad = True
-                for r in gaussians.rot_vars:
-                    r.requires_grad = False
-                gaussians.scale.requires_grad = False
-                translation_mode = True
+            # if iteration == args_dict['max_translation']:
+            #     print('switching mode. allowing translation (rev)')
+            #     for c in gaussians.centers:
+            #         c.requires_grad = True
+            #     for r in gaussians.rot_vars:
+            #         r.requires_grad = False
+            #     gaussians.scale.requires_grad = False
+            #     translation_mode = True
 
                 
             for center_id in list(range(len(gaussians.centers))):
@@ -211,23 +212,23 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 # masked_image = image*mask
                 masked_gt_image = gt_image*mask
 
-                if center_id == 1: # debugging on second chair
-                    os.makedirs(os.path.join(scene.model_path, 'debug'), exist_ok=True)
-                    to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
-                    to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_part.png'))
+                # if center_id == 1: # debugging on second chair
+                #     os.makedirs(os.path.join(scene.model_path, 'debug'), exist_ok=True)
+                #     to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
+                #     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                #     to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_part.png'))
 
-                    to_save_image = (image*mask).detach().permute(1, 2, 0).cpu().numpy()
-                    to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_part_masked.png'))
+                #     to_save_image = (image*mask).detach().permute(1, 2, 0).cpu().numpy()
+                #     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                #     to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_part_masked.png'))
 
-                    to_save_image = masked_gt_image.detach().permute(1, 2, 0).cpu().numpy()
-                    to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_gt_part.png'))
+                #     to_save_image = masked_gt_image.detach().permute(1, 2, 0).cpu().numpy()
+                #     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                #     to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_gt_part.png'))
 
-                    to_save_image = gt_image.detach().permute(1, 2, 0).cpu().numpy()
-                    to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                    to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_gt_full.png'))
+                #     to_save_image = gt_image.detach().permute(1, 2, 0).cpu().numpy()
+                #     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                #     to_save_image.save(os.path.join(scene.model_path, 'debug', f'{iteration}_gt_full.png'))
 
 
                 if iteration % 1000 == 0 or iteration < 4 or iteration == 50:
@@ -245,11 +246,11 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 
                 Ll1 = l1_loss(masked_image, masked_gt_image)
                 loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-                rendered_binary = (torch.sigmoid(image.sum(dim=0)) - 0.5) * 2
-                intersection = (rendered_binary * mask).sum()
-                union = (rendered_binary + mask - (rendered_binary * mask)).sum()
-                iou = 1 - (intersection / union.clamp(min=1e-6))
-                loss = loss + iou
+                # rendered_binary = (torch.sigmoid(image.sum(dim=0)) - 0.5) * 2
+                # intersection = (rendered_binary * mask).sum()
+                # union = (rendered_binary + mask - (rendered_binary * mask)).sum()
+                # iou = 1 - (intersection / union.clamp(min=1e-6))
+                # loss = loss + iou
                 loss.backward()
 
                 iter_end.record()
@@ -262,32 +263,47 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 if iteration == opt.iterations:
                     progress_bar.close()
 
-                if len(gaussians.centers) > 1 and iteration % 100 == 1:
-                    print(f'iter is {iteration}')
-                    print(f'object is {sub_iter}_{1}')
-                    print(f'value is {gaussians.centers[1]}')
-                    print(f'grad is {gaussians.centers[1].grad}')
-                    print(f'object is {sub_iter}_{0}')
-                    print(f'value is {gaussians.centers[0]}')
-                    print(f'grad is {gaussians.centers[0].grad}')
-                    print(f'translation_mode is {translation_mode}')
-                    print(f'learning rate is {gaussians.center_optimizer.param_groups}')
+                # if len(gaussians.centers) > 1 and iteration % 100 == 1:
+                #     print(f'iter is {iteration}')
+                #     print(f'object is {sub_iter}_{1}')
+                #     print(f'value is {gaussians.centers[1]}')
+                #     print(f'grad is {gaussians.centers[1].grad}')
+                #     print(f'object is {sub_iter}_{0}')
+                #     print(f'value is {gaussians.centers[0]}')
+                #     print(f'grad is {gaussians.centers[0].grad}')
+                #     print(f'translation_mode is {translation_mode}')
+                #     print(f'learning rate is {gaussians.center_optimizer.param_groups}')
 
                 if iteration < opt.iterations:
-                    # print(iteration)
-                    # if iteration > args_dict['min_translation'] and iteration < args_dict['max_translation']:
-                    if translation_mode == False:
-                        # print('optimizing scale and rotation')
+                    if iteration > args_dict['min_translation'] and iteration < args_dict['max_translation']:
                         gaussians.scale_optimizer.step()
                         gaussians.scale_optimizer.zero_grad(set_to_none = True)
                         gaussians.rot_var_optimizer.step()
                         gaussians.rot_var_optimizer.zero_grad(set_to_none = True)
-                    else:
-                        # print('optimizing translation')
+                    elif iteration >= args_dict['max_translation']:
+                        gaussians.scale_optimizer.step()
+                        gaussians.scale_optimizer.zero_grad(set_to_none = True)
+                        gaussians.rot_var_optimizer.step()
+                        gaussians.rot_var_optimizer.zero_grad(set_to_none = True)
                         gaussians.center_optimizer.step()
-                        gaussians.center_optimizer.zero_grad
-                if iteration % 100 == 1:
-                    print('---')
+                        gaussians.center_optimizer.zero_grad(set_to_none = True)
+                    else:
+                        gaussians.center_optimizer.step()
+                        gaussians.center_optimizer.zero_grad(set_to_none = True)
+                #     # print(iteration)
+                #     # if iteration > args_dict['min_translation'] and iteration < args_dict['max_translation']:
+                #     if translation_mode == False:
+                #         # print('optimizing scale and rotation')
+                #         gaussians.scale_optimizer.step()
+                #         gaussians.scale_optimizer.zero_grad(set_to_none = True)
+                #         gaussians.rot_var_optimizer.step()
+                #         gaussians.rot_var_optimizer.zero_grad(set_to_none = True)
+                #     else:
+                #         # print('optimizing translation')
+                #         gaussians.center_optimizer.step()
+                #         gaussians.center_optimizer.zero_grad
+                # if iteration % 100 == 1:
+                #     print('---')
                 
                 # training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
                 if (iteration in saving_iterations):
@@ -426,7 +442,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     image_files = sorted(glob.glob(os.path.join(frames_folder, "*.png")))
     first_image = cv2.imread(image_files[0])
     frame_height, frame_width, _ = first_image.shape
-    fps = 10
+    fps = 30
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     video_writer = cv2.VideoWriter(video_path, fourcc, fps, (frame_width, frame_height))
 
@@ -546,7 +562,7 @@ if __name__ == "__main__":
     parser.add_argument("--min_translation", type=int, required=True)
     parser.add_argument("--max_translation", type=int, required=True)
 
-    parser.add_argument("--translation_lr", type=float, required=True)
+    # parser.add_argument("--translation_lr", type=float, required=True)
     
     # removed for now, will hardcode
     # parser.add_argument('--num_masks', type=int, required=True)
