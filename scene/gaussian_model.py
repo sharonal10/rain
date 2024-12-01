@@ -253,25 +253,26 @@ class GaussianModel:
                 {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
             ]
             self.scale_optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
-            for c in centers:
-                c_tensor = torch.tensor(np.asarray(c)).float().cuda()
-                self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
-                
+            if True:
+                for c in centers:
+                    c_tensor = torch.tensor(np.asarray(c)).float().cuda()
+                    self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
+                    
 
-                r_tensor = torch.tensor(1.8).float().cuda() # will be multiplied by 100
-                self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
-                
+                    r_tensor = torch.tensor(1.8).float().cuda() # will be multiplied by 100
+                    self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
+                    
 
-            # lc = [{'params': self.centers, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
-            lc = [{'params': self.centers, 'lr': translation_lr, "name": "center"},]
-            print(f'lc, {lc}')
-            self.center_optimizer = torch.optim.Adam(lc, lr=0.0, eps=1e-15)
-            print(self.center_optimizer.param_groups)
+                # lc = [{'params': self.centers, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
+                lc = [{'params': self.centers, 'lr': -translation_lr, "name": "center"},]
+                print(f'lc, {lc}')
+                self.center_optimizer = torch.optim.Adam(lc, lr=0.0, eps=1e-15)
+                print(self.center_optimizer.param_groups)
 
-            lrv = [{'params': self.rot_vars, 'lr': training_args.rotation_lr, "name": "rot_var"},]
-            print(f'lrv, {lrv}')
-            self.rot_var_optimizer = torch.optim.Adam(lrv, lr=0.0, eps=1e-15)
-            print(self.rot_var_optimizer.param_groups)
+                lrv = [{'params': self.rot_vars, 'lr': training_args.rotation_lr, "name": "rot_var"},]
+                print(f'lrv, {lrv}')
+                self.rot_var_optimizer = torch.optim.Adam(lrv, lr=0.0, eps=1e-15)
+                print(self.rot_var_optimizer.param_groups)
                 
 
             

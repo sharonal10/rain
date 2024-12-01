@@ -107,6 +107,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         for sub_iter in range(len(gaussians_list)):
             gaussians = gaussians_list[sub_iter]
             scene = scene_list[sub_iter]
+            viewpoint_idx = 150
             viewpoint_cam = scene.getTrainCameras().copy()[viewpoint_idx]
             if network_gui.conn == None:
                 network_gui.try_connect()
@@ -195,14 +196,15 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 
                 Ll1 = l1_loss(masked_image, masked_gt_image)
                 rendered_binary = (torch.sigmoid(image.sum(dim=0)) - 0.5) * 2 #non-black pixels
-                print('rendered_binary.max()', rendered_binary.max())
+                # print('rendered_binary.max()', rendered_binary.max())
                 # print('rendered binary percent:', rendered_binary.sum() / rendered_binary.numel())
                 intersection = (rendered_binary * mask).sum()
                 union = (rendered_binary + mask - (rendered_binary * mask)).sum()
                 iou = 1 - (intersection / union.clamp(min=1e-6))
 
                 loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
-                loss = loss + iou
+                loss = loss # + iou
+                # print('loss', loss.item())
 
 
                 if iteration % 1000 == 0 or iteration < 4 or iteration == 50:
@@ -241,8 +243,12 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                         gaussians.rot_var_optimizer.step()
                         gaussians.rot_var_optimizer.zero_grad(set_to_none = True)
                     else:
+                        #print('======================')
+                        #print(gaussians.centers[0])
                         gaussians.center_optimizer.step()
-                        gaussians.center_optimizer.zero_grad
+                        gaussians.center_optimizer.zero_grad(set_to_none = True)
+                        #print(gaussians.centers[0])
+                        #print('======================')
                         
                 
                 # training_report(tb_writer, iteration, Ll1, loss, l1_loss, iter_start.elapsed_time(iter_end), testing_iterations, scene, render, (pipe, background))
