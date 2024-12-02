@@ -71,7 +71,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load[mask_id])
         if mask_id == 0:
-            gaussians.training_setup(opt, [np.array([0.3, 0.3, 0.3])]) 
+            gaussians.training_setup(opt, [np.array([0.3, 0.3, 0.0])]) 
         else:
             assert False
             # gaussians.training_setup(opt, raw_centers) 
@@ -208,6 +208,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
 
                 if iteration % 1000 == 0 or iteration < 4 or iteration == 50:
+                    print('values:', gaussians.centers, gaussians.rot_vars, gaussians.scale)
                     to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
                     to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
                     to_save_image.save(os.path.join(scene.model_path, f'part_{sub_iter}_{center_id}_{iteration}.png'))
