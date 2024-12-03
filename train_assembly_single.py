@@ -206,8 +206,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
                 loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
 
-                if iteration <= args_dict['min_translation']:
-                    loss = iou
+                # if iteration <= args_dict['min_translation']:
+                #     loss = iou
                 # loss = loss + iou
                 # print('loss', loss.item())
 
