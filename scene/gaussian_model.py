@@ -260,9 +260,14 @@ class GaussianModel:
                 self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
                 
         
-            for r in rot_vars:
-                r_tensor = torch.tensor(r).float().cuda() # will be multiplied by 100
-                self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
+            if rot_vars:
+                for r in rot_vars:
+                    r_tensor = torch.tensor(r).float().cuda() # will be multiplied by 100
+                    self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
+            else:
+                for c in centers:
+                    r_tensor = torch.tensor(0.1).float().cuda() # will be multiplied by 100
+                    self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
                 
 
             # lc = [{'params': self.centers, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
