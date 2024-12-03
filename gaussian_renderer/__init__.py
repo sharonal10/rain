@@ -14,8 +14,8 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
         xyz = pc.get_xyz
     centroid = xyz.mean(dim=0).detach()
 
-    # xyz, rotation_matrix = rotate_around_z(xyz, (pc.rot_vars[center_id] - 1.0) * 100, centroid)
-    xyz, rotation_matrix = rotate_around_z(xyz, (pc.rot_vars[center_id]) * 100, centroid)
+    xyz, rotation_matrix = rotate_around_z(xyz, (pc.rot_vars[center_id] + 1.6) * 100, centroid)
+    # xyz, rotation_matrix = rotate_around_z(xyz, (pc.rot_vars[center_id]) * 100, centroid)
 
     # center to origin then scale
     xyz = ((xyz - centroid) * pc.scale) + centroid
@@ -105,8 +105,8 @@ def render_multi(viewpoint_camera, gaussians_list, pipe, bg_color : torch.Tensor
             centroid = curr.mean(dim=0).detach()
             # center to origin then scale
             # print(f'angle is {(pc.rot_vars[i] - 1.0) * 100}')
-            # curr, rotation_matrix = rotate_around_z(curr, (pc.rot_vars[i] - 1.0) * 100, centroid)
-            curr, rotation_matrix = rotate_around_z(curr, (pc.rot_vars[i]) * 100, centroid)
+            curr, rotation_matrix = rotate_around_z(curr, (pc.rot_vars[i] + 1.6) * 100, centroid)
+            # curr, rotation_matrix = rotate_around_z(curr, (pc.rot_vars[i]) * 100, centroid)
             rotation_quaternion = rotation_matrix_to_quaternion(rotation_matrix)
             rotation_quaternions.append(rotation_quaternion)
             curr = ((curr - centroid) * pc.scale) + centroid
