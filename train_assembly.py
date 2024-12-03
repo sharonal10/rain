@@ -67,13 +67,16 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         0: [0],
         3: [1, 2, 3],    
     }
+    print('raw centers')
+    for c in raw_centers:
+        print(c)
     for mask_id in [0, 3]: # 0 = table, 3 = chair, which is duplicated to make 1 & 2
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load[mask_id])
         if mask_id == 0:
-            gaussians.training_setup(opt, centers=[np.array([0, 0, 0])])#, translation_lr=args_dict['translation_lr']) 
+            gaussians.training_setup(opt, centers=[np.array([0, 0, 0])], scale=1.0, rot_vars=[0.9])#, translation_lr=args_dict['translation_lr']) 
         else:
-            gaussians.training_setup(opt, centers=raw_centers)#, translation_lr=args_dict['translation_lr']) 
+            gaussians.training_setup(opt, centers=raw_centers, scale=0.3, rot_vars=[0.0, 0.0, 1.8])#, translation_lr=args_dict['translation_lr']) 
         gaussians_list.append(gaussians)
         scene_list.append(scene)
     

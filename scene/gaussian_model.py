@@ -227,7 +227,7 @@ class GaussianModel:
             self._opacity = nn.Parameter(opacities.requires_grad_(True))
         self.max_radii2D = torch.zeros((self.get_xyz.shape[0]), device="cuda")
 
-    def training_setup(self, training_args, centers=[], translation_lr=0.0005):
+    def training_setup(self, training_args, centers=[], scale=None, rot_vars=[], translation_lr=0.0005):
         self.percent_dense = training_args.percent_dense
         self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
@@ -248,31 +248,33 @@ class GaussianModel:
                                                         max_steps=training_args.position_lr_max_steps)
         else:
             # 4 chairs = 4 centers fed in.
+            if scale is not None:
+                self.scale = torch.tensor(scale).float().cuda()
             self.scale = nn.Parameter(self.scale.requires_grad_(True))
             l = [
                 {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
             ]
             self.scale_optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
-            if True:
-                for c in centers:
-                    c_tensor = torch.tensor(np.asarray(c)).float().cuda()
-                    self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
-                    
+            for c in centers:
+                c_tensor = torch.tensor(np.asarray(c)).float().cuda()
+                self.centers.append(nn.Parameter(c_tensor.requires_grad_(True)))
+                
+        
+            for r in rot_vars:
+                r_tensor = torch.tensor(r).float().cuda() # will be multiplied by 100
+                self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
+                
 
-                    r_tensor = torch.tensor(1.8).float().cuda() # will be multiplied by 100
-                    self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
-                    
+            # lc = [{'params': self.centers, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
+            lc = [{'params': self.centers, 'lr': -translation_lr, "name": "center"},]
+            print(f'lc, {lc}')
+            self.center_optimizer = torch.optim.Adam(lc, lr=0.0, eps=1e-15)
+            print(self.center_optimizer.param_groups)
 
-                # lc = [{'params': self.centers, 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "center"},]
-                lc = [{'params': self.centers, 'lr': -translation_lr, "name": "center"},]
-                print(f'lc, {lc}')
-                self.center_optimizer = torch.optim.Adam(lc, lr=0.0, eps=1e-15)
-                print(self.center_optimizer.param_groups)
-
-                lrv = [{'params': self.rot_vars, 'lr': training_args.rotation_lr, "name": "rot_var"},]
-                print(f'lrv, {lrv}')
-                self.rot_var_optimizer = torch.optim.Adam(lrv, lr=0.0, eps=1e-15)
-                print(self.rot_var_optimizer.param_groups)
+            lrv = [{'params': self.rot_vars, 'lr': training_args.rotation_lr, "name": "rot_var"},]
+            print(f'lrv, {lrv}')
+            self.rot_var_optimizer = torch.optim.Adam(lrv, lr=0.0, eps=1e-15)
+            print(self.rot_var_optimizer.param_groups)
                 
 
             
