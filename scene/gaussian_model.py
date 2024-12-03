@@ -251,7 +251,7 @@ class GaussianModel:
             if scale is not None:
                 self.scale = torch.tensor(scale).float().cuda()
             else:
-                self.scale = torch.tensor(0.4).float().cuda()
+                self.scale = torch.tensor(0.5).float().cuda()
             self.scale = nn.Parameter(self.scale.requires_grad_(True))
             l = [
                 {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
