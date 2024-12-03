@@ -266,7 +266,7 @@ class GaussianModel:
                     self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
             else:
                 for c in centers:
-                    r_tensor = torch.tensor(0.1).float().cuda() # will be multiplied by 100
+                    r_tensor = torch.tensor(-0.8).float().cuda() # will be multiplied by 100
                     self.rot_vars.append(nn.Parameter(r_tensor.requires_grad_(True)))
                 
 
