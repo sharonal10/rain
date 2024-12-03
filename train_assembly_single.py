@@ -394,7 +394,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     first_image = cv2.imread(image_files[0])
     frame_height, frame_width, _ = first_image.shape
     fps = 30
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = cv2.VideoWriter_fourcc(*'avc1') 
     video_writer = cv2.VideoWriter(video_path, fourcc, fps, (frame_width, frame_height))
 
     for file in image_files:
