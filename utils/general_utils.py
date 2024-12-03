@@ -89,7 +89,7 @@ def safe_state(silent):
     torch.manual_seed(0)
     torch.cuda.set_device(torch.device("cuda:0"))
 
-def rgb_sigmoid(x):
+def rgb_sigmoid(image):
     if image.dim() == 3 and image.size(0) == 3:
         image = image.sum(dim=0)
     
