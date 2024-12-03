@@ -88,3 +88,10 @@ def safe_state(silent):
     np.random.seed(0)
     torch.manual_seed(0)
     torch.cuda.set_device(torch.device("cuda:0"))
+
+def rgb_sigmoid(x):
+    if image.dim() == 3 and image.size(0) == 3:
+        image = image.sum(dim=0)
+    
+    processed_image = (torch.sigmoid(image) - 0.5) * 2
+    return processed_image

@@ -8,7 +8,7 @@ import sys
 from scene import Scene, GaussianModel
 from scene.gaussian_model import rotation_matrix_to_quaternion, rotate_quaternions, rotate_around_z
 from scene.dataset_readers import read_box
-from utils.general_utils import safe_state
+from utils.general_utils import safe_state, rgb_sigmoid
 import uuid
 import numpy as np
 import wandb
@@ -72,7 +72,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load[mask_id])
         if mask_id == 0:
             # gaussians.training_setup(opt, [np.array([0.3, 0.3, -0.7])]) 
-            gaussians.training_setup(opt, [np.array([0.3, 0.3, 0.3])]) 
+            gaussians.training_setup(opt, [np.array([0.0, 0.0, 0.3])]) 
         else:
             assert False
             # gaussians.training_setup(opt, raw_centers) 
@@ -196,8 +196,8 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
                 masked_gt_image = gt_image*mask
                 
                 Ll1 = l1_loss(masked_image, masked_gt_image)
-                rendered_binary = (torch.sigmoid(image.sum(dim=0)) - 0.5) * 2 #non-black pixels
-                gt_binary = (torch.sigmoid(masked_gt_image.sum(dim=0)) - 0.5) * 2
+                rendered_binary = rgb_sigmoid(rgb_sigmoid(image)) #non-black pixels
+                gt_binary = rgb_sigmoid(rgb_sigmoid(masked_gt_image))
                 # print('rendered_binary.max()', rendered_binary.max())
                 # print('rendered binary percent:', rendered_binary.sum() / rendered_binary.numel())
                 intersection = (rendered_binary * gt_binary).sum()
