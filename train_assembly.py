@@ -70,13 +70,22 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
     print('raw centers')
     for c in raw_centers:
         print(c)
+    # [ 0.34842557 -0.78965276  0.42826003]
+    # [0.34842557 0.57315546 0.42826003]
+    # [-0.38885266  0.83391482  0.42826003] 
+
+    assert len(args_dict['centers']) == 3*4, len(args_dict['centers'])
+    assert len(args_dict['scales']) == 2, len(args_dict['scales'])
+    assert len(args_dict['rot_vars']) == 4, len(args_dict['rot_vars'])
+    all_centers = [args_dict['centers'][i * 3:(i + 1) * 3] for i in range(4)]
+    
     for mask_id in [0, 3]: # 0 = table, 3 = chair, which is duplicated to make 1 & 2
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load[mask_id])
         if mask_id == 0:
-            gaussians.training_setup(opt, centers=[np.array([0, 0, 0])], scale=1.0, rot_vars=[0.9])#, translation_lr=args_dict['translation_lr']) 
+            gaussians.training_setup(opt, centers=[all_centers[0]], scale=args_dict['scales'][0], rot_vars=[args_dict['rot_vars'][0]])#, translation_lr=args_dict['translation_lr']) 
         else:
-            gaussians.training_setup(opt, centers=raw_centers, scale=0.3, rot_vars=[0.0, 0.0, 1.8])#, translation_lr=args_dict['translation_lr']) 
+            gaussians.training_setup(opt, centers=all_centers[1:4], scale=args_dict['scales'][1], rot_vars=args_dict['rot_vars'][1:4])#, translation_lr=args_dict['translation_lr']) 
         gaussians_list.append(gaussians)
         scene_list.append(scene)
     
@@ -568,6 +577,12 @@ if __name__ == "__main__":
 
     parser.add_argument("--min_translation", type=int, required=True)
     parser.add_argument("--max_translation", type=int, required=True)
+
+    parser.add_argument("--centers", nargs="+", type=float, required=True, help="3 numbers for each object")
+    parser.add_argument("--scales", nargs="+", type=float, required=True, help="1 number for each object group")
+    parser.add_argument("--rot_vars", nargs="+", type=float, required=True, help="1 number for each object")
+
+
 
     # parser.add_argument("--translation_lr", type=float, required=True)
     
