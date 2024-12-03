@@ -71,7 +71,7 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, mask_id=mask_id, assembly=True)
         scene = Scene(dataset, gaussians, args_dict=args_dict, mask_id=mask_id, assembly_source=assembly_sources[mask_id], sam_mask_to_load=sam_mask_to_load[mask_id])
         if mask_id == 0:
-            gaussians.training_setup(opt, [np.array([0.3, 0.3, -0.6])]) 
+            gaussians.training_setup(opt, [np.array([0.35, 0.3, -0.5])]) 
             # gaussians.training_setup(opt, [np.array([0.0, 0.0, 0.0])]) 
         else:
             assert False

@@ -119,7 +119,7 @@ class GaussianModel:
         # render, render_multi.
         # in the training scripts, the save multi code.
         self.centers = [] # represents the offset applied to create other instances
-        self.scale = torch.tensor(0.5).float().cuda() # they should still all be the same scale
+        self.scale = None # they should still all be the same scale
         self.rot_vars = [] # all different rotations (in degrees)
         self.center_optimizer = None
         self.scale_optimizer = None
@@ -250,6 +250,8 @@ class GaussianModel:
             # 4 chairs = 4 centers fed in.
             if scale is not None:
                 self.scale = torch.tensor(scale).float().cuda()
+            else:
+                self.scale = torch.tensor(0.4).float().cuda()
             self.scale = nn.Parameter(self.scale.requires_grad_(True))
             l = [
                 {'params': [self.scale], 'lr': training_args.scaling_lr, "name": "scale"},
