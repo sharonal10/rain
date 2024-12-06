@@ -74,6 +74,6 @@ The yellow arrow represents left, red represents backwards, green represents rig
 
 Identify which arrow is pointing in the same direction that the chair in {image_path_5} is facing. Is the chair in {image_path_5} facing right, forwards, left, or backwards?"""
 
-answer = ask_gpt4_with_images(question, image_path_1, image_path_2, image_path_4, image_path_5)
+answer = ask_gpt4_with_images(question, image_path_1, image_path_2, image_path_3, image_path_4, image_path_5)
 
 print(answer)
