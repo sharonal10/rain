@@ -67,7 +67,7 @@ image_path_1 = "vlm/for_vlm_arrows/0001.png"
 image_path_2 = "vlm/for_vlm_arrows/0031.png"
 image_path_3 = "vlm/for_vlm_arrows/0061.png"
 image_path_4 = "vlm/for_vlm_arrows/0091.png"
-image_path_5 = f"vlm/for_vlm_arrows/{args.input_image}"
+image_path_5 = args.input_image
 question = f"""{image_path_1} is a chair facing right. {image_path_2} is a chair facing forwards. {image_path_3} is a chair facing the left. {image_path_4} is a chair facing backwards.
 
 The yellow arrow represents left, red represents backwards, green represents right, blue represents forwards.
