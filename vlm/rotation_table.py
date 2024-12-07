@@ -63,10 +63,10 @@ def ask_gpt4_with_images(question, image_path_1, image_path_2, image_path_3, ima
     )
     return response.choices[0].message.content
 
-image_path_1 = "vlm/for_vlm_arrows/0001.png"
-image_path_2 = "vlm/for_vlm_arrows/0021.png"
-image_path_3 = "vlm/for_vlm_arrows/0041.png"
-image_path_4 = "vlm/for_vlm_arrows/0055.png"
+image_path_1 = "vlm/for_vlm_arrows/table_0001.png"
+image_path_2 = "vlm/for_vlm_arrows/table_0021.png"
+image_path_3 = "vlm/for_vlm_arrows/table_0041.png"
+image_path_4 = "vlm/for_vlm_arrows/table_0055.png"
 image_path_5 = args.input_image
 question = f"""{image_path_1} is a table aligned with the red arrow. {image_path_2} is a table aligned with the yellow arrow. {image_path_3} is a table aligned with the blue arrow. {image_path_4} is a table aligned with the green arrow.
 
