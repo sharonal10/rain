@@ -63,14 +63,18 @@ def ask_gpt4_with_images(question, image_path_1, image_path_2, image_path_3, ima
     )
     return response.choices[0].message.content
 
-image_path_1 = "vlm/for_vlm_arrows_centroid/table_0001.png"
-image_path_2 = "vlm/for_vlm_arrows_centroid/table_0021.png"
-image_path_3 = "vlm/for_vlm_arrows_centroid/table_0041.png"
-image_path_4 = "vlm/for_vlm_arrows_centroid/table_0055.png"
+image_path_1 = "vlm/for_vlm_arrows_centroid/table2_0001.png"
+image_path_2 = "vlm/for_vlm_arrows_centroid/table2_0021.png"
+image_path_3 = "vlm/for_vlm_arrows_centroid/table2_0041.png"
+image_path_4 = "vlm/for_vlm_arrows_centroid/table2_0055.png"
 image_path_5 = args.input_image
-question = f"""{image_path_1} is a table aligned with the red arrow. {image_path_2} is a table aligned with the yellow arrow. {image_path_3} is a table aligned with the blue arrow. {image_path_4} is a table aligned with the green arrow.
+# question = f"""{image_path_1} is a table aligned with the red arrow. {image_path_2} is a table aligned with the yellow arrow. {image_path_3} is a table aligned with the blue arrow. {image_path_4} is a table aligned with the green arrow.
 
-Identify which arrow is the table in {image_path_5} aligned with."""
+# Identify which arrow is the table in {image_path_5} aligned with."""
+
+question = f"""{image_path_1}, {image_path_2}, and {image_path_3} are tables aligned with the yellow arrow, the left-right axis, as the tabletop is more in line with that axis. {image_path_4} is a table aligned with the green arrow, the up-down axis, as the tabletop is more in line with that axis.
+
+Identify which arrow and axis is the table in {image_path_5} aligned with."""
 
 answer = ask_gpt4_with_images(question, image_path_1, image_path_2, image_path_3, image_path_4, image_path_5)
 
