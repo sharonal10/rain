@@ -132,15 +132,21 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
             render_pkg = render(viewpoint_cam, gaussians, pipe, bg, low_pass = low_pass)
             image, viewspace_point_tensor, visibility_filter, radii, depth = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"], render_pkg["depth"]
 
-            if iteration % 1000 == 0 or iteration < 4:
-                to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
-                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
-                to_save_image.save(os.path.join(scene.model_path, f'whole_{iteration}.png'))
 
             gt_image = viewpoint_cam.original_image.cuda()
             mask = viewpoint_cam.mask.cuda()
             masked_image = image
             masked_gt_image = gt_image*mask
+
+            
+            if iteration % 1000 == 0 or iteration < 4:
+                to_save_image = image.detach().permute(1, 2, 0).cpu().numpy()
+                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                to_save_image.save(os.path.join(scene.model_path, f'whole_{iteration}.png'))
+
+                to_save_image = masked_gt_image.detach().permute(1, 2, 0).cpu().numpy()
+                to_save_image = Image.fromarray((to_save_image * 255).astype(np.uint8))
+                to_save_image.save(os.path.join(scene.model_path, f'gt_{iteration}.png'))
             
             Ll1 = l1_loss(masked_image, masked_gt_image)
             loss = (1.0 - opt.lambda_dssim) * Ll1 + opt.lambda_dssim * (1.0 - ssim(masked_image, masked_gt_image))
