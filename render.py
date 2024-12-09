@@ -94,6 +94,8 @@ def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParam
         print(f"Set divide_ratio to {divide_ratio}")
         gaussians = GaussianModel(dataset.sh_degree, divide_ratio, scale=args_dict['scale'], mask_id=0)
         scene = Scene(dataset, gaussians, load_iteration=iteration, args_dict=args_dict, mask_id=0, render_source=args_dict['render_source'])
+        if args_dict['scale'] != 1:
+            args_dict['prefix'] = args_dict['prefix'] + '_scale' + args_dict['scale'] + '_'
 
         bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
