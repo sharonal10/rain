@@ -64,13 +64,11 @@ def training(dataset, opt, pipe, testing_iterations ,saving_iterations, checkpoi
 
     scene_order = list(range(len(scene.getTrainCameras())))
     random.shuffle(scene_order)
-    print(scene_order)
 
     for iteration in range(first_iter, opt.iterations + 1):
         if not viewpoint_stack:
             viewpoint_stack = scene_order.copy()
         viewpoint_idx = viewpoint_stack.pop()
-        print(viewpoint_idx)
         for sub_iter in range(len(gaussians_list)):
             gaussians = gaussians_list[sub_iter]
             scene = scene_list[sub_iter]
